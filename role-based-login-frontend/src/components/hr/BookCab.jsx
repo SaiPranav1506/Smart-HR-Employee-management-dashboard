@@ -125,7 +125,7 @@ const BookCab = () => {
       </form>
 
       {message && (
-        <p style={{ marginTop: 14, color: "#d4af37", fontWeight: 900 }}>
+        <p style={{ marginTop: 14, color: "var(--gold)", fontWeight: 900 }}>
           {message}
         </p>
       )}

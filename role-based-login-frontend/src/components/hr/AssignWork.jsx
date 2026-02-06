@@ -101,7 +101,7 @@ const AssignWork = () => {
       </form>
 
       {message && (
-        <p style={{ marginTop: 14, fontWeight: 900, color: "#d4af37" }}>{message}</p>
+        <p style={{ marginTop: 14, fontWeight: 900, color: "var(--gold)" }}>{message}</p>
       )}
             </div>
           </div>

@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import TopNav from "../common/TopNav";
 import { authStorage } from "../../auth/storage";
+import LiveMouseBackground from "../common/LiveMouseBackground";
+import { displayNameFromEmail } from "../common/displayName";
 
 const DriverDashboard = () => {
   const [trips, setTrips] = useState([]);
@@ -83,11 +85,36 @@ const DriverDashboard = () => {
     <>
       <TopNav title="Driver Dashboard" />
       <div className="page">
+      <LiveMouseBackground />
       <div className="container">
+      <section className="dashHero dashHeroDriver" aria-label="Driver dashboard introduction">
+        <div className="dashHeroInner">
+          <div className="dashHeroKicker">Driver Home</div>
+          <h1 className="dashHeroTitle">Hello {displayNameFromEmail(authStorage.getEmail())}.</h1>
+          <p className="dashHeroText">
+            Thanks for keeping things moving. This page helps you stay on top of your shift: set availability, review
+            assigned trips, and mark trips complete when finished so HR and employees see real-time status. Keep your
+            availability accurate to avoid delays and missed assignments. Use the trip list below for pickup/drop,
+            timings, and employee details, and use Chat from the top navigation for quick coordination or directions.
+          </p>
+          <div className="dashHeroActions">
+            <a className="btnPrimary" href="#dash-options">View options</a>
+          </div>
+        </div>
+      </section>
+
+      <section id="dash-options" className="dashOptions" aria-label="Driver dashboard options">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-        <h2 style={{ margin: 0 }}>My Driver Dashboard</h2>
+        <h2 className="hTitle" style={{ margin: 0 }}>Available options</h2>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <span style={{ padding: "6px 10px", borderRadius: 999, background: driver?.available ? "#DCFCE7" : "#FEE2E2", color: "#111827", fontWeight: 600 }}>
+          <span
+            className="badge"
+            style={{
+              borderColor: driver?.available ? "rgba(34, 197, 94, 0.35)" : "rgba(248, 113, 113, 0.35)",
+              color: driver?.available ? "rgba(187, 247, 208, 0.92)" : "rgba(254, 202, 202, 0.92)",
+              background: driver?.available ? "rgba(34, 197, 94, 0.10)" : "rgba(248, 113, 113, 0.10)",
+            }}
+          >
             {driver?.available ? "Available" : "Not Available"}
           </span>
           <button onClick={toggleAvailability} disabled={busy || !driver} className="btnGhost">
@@ -99,7 +126,7 @@ const DriverDashboard = () => {
       <h3 style={{ marginTop: 18 }}>Assigned trips</h3>
 
       {trips.length === 0 ? (
-        <p>No trips assigned today.</p>
+        <p className="subtle">No trips assigned today.</p>
       ) : (
         <table className="table">
           <thead>
@@ -142,6 +169,7 @@ const DriverDashboard = () => {
           </tbody>
         </table>
       )}
+      </section>
       </div>
       </div>
     </>

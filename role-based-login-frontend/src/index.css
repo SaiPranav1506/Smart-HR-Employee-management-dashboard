@@ -4,8 +4,8 @@ body {
     "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: #05060b;
-  color: #f3f1e8;
+  background: #000000;
+  color: var(--text);
 }
 
 button,
@@ -16,7 +16,7 @@ textarea {
 }
 
 a {
-  color: #d4af37;
+  color: var(--gold);
 }
 
 * {

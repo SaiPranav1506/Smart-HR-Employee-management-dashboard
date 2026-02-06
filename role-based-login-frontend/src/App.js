@@ -14,6 +14,8 @@ import AssignWork from "./components/hr/AssignWork";
 import MyAssignments from "./components/hr/MyAssignments";
 import MyEmployees from "./components/hr/MyEmployees";
 import RequireRole from "./auth/RequireRole";
+import ChatPage from "./components/chat/ChatPage";
+import MarketingLanding from "./components/MarketingLanding";
 
  // optional
 
@@ -21,6 +23,9 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* Marketing landing */}
+        <Route path="/marketing" element={<MarketingLanding />} />
+
         {/* Login & Register */}
         <Route path="/" element={<Login />} />
         <Route path="/login" element={<Login />} />
@@ -46,6 +51,9 @@ function App() {
         {/* Driver Routes */}
         <Route path="/driver-dashboard" element={<RequireRole allowedRoles={["driver"]}><DriverDashboard /></RequireRole>} />
         {/* <Route path="/driver/complete-trip" element={<TripCompletion />} /> */}
+
+        {/* Chat (available for all roles) */}
+        <Route path="/chat" element={<RequireRole allowedRoles={["hr", "employee", "driver", "admin"]}><ChatPage /></RequireRole>} />
       </Routes>
     </BrowserRouter>
   );

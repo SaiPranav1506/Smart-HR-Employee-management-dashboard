@@ -108,6 +108,22 @@ const TopNav = ({ title, links = [] }) => {
           {email && <span className="navPill">{email}</span>}
           {role && <span className="navPill">{role.toUpperCase()}</span>}
 
+          <NavLink
+            to="/chat"
+            className="navIconBtn"
+            aria-label="Chat"
+            title="Chat"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path
+                d="M20 3H4a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h3v3a1 1 0 0 0 1.6.8L13.8 18H20a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2Zm0 13h-6.6a1 1 0 0 0-.6.2L9 19v-2a1 1 0 0 0-1-1H4V5h16v11Z"
+                fill="currentColor"
+                opacity="0.9"
+              />
+              <path d="M7 9h10v2H7V9Zm0-3h10v2H7V6Zm0 6h7v2H7v-2Z" fill="currentColor" opacity="0.6" />
+            </svg>
+          </NavLink>
+
           {role === "hr" && (
             <div className="navIconWrap" ref={popoverRef}>
               <button
@@ -136,7 +152,7 @@ const TopNav = ({ title, links = [] }) => {
                     <div className="navPopoverInner">
                       <div className="navPopoverHeader">
                         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                          <div style={{ fontWeight: 950, color: "#d4af37" }}>Notifications</div>
+                          <div style={{ fontWeight: 950, color: "var(--gold)" }}>Notifications</div>
                           <span className="badge badgeGold">Unread: {unreadCount}</span>
                         </div>
                         <button type="button" className="btnGhost" onClick={refreshNotifications}>

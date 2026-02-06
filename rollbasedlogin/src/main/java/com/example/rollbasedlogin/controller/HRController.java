@@ -20,10 +20,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.rollbasedlogin.dto.EmployeeSummary;
 import com.example.rollbasedlogin.model.Booking;
+import com.example.rollbasedlogin.model.ChatMessage;
 import com.example.rollbasedlogin.model.Driver;
 import com.example.rollbasedlogin.model.Notification;
 import com.example.rollbasedlogin.model.WorkAssignment;
 import com.example.rollbasedlogin.repository.BookingRepository;
+import com.example.rollbasedlogin.repository.ChatMessageRepository;
 import com.example.rollbasedlogin.repository.DriverRepository;
 import com.example.rollbasedlogin.repository.NotificationRepository;
 import com.example.rollbasedlogin.repository.UserRepository;
@@ -49,6 +51,9 @@ private NotificationRepository notificationRepo;
 @Autowired
 private UserRepository userRepo;
 
+@Autowired
+private ChatMessageRepository chatRepo;
+
 @PostMapping("/book")
 public String bookCab(@RequestBody Booking booking) {
     booking.setBookingDate(LocalDate.now().toString());
@@ -64,6 +69,26 @@ public String bookCab(@RequestBody Booking booking) {
         // Mark driver as unavailable
         assignedDriver.setAvailable(false);
         driverRepo.save(assignedDriver);
+
+        // Notify employee via chat: cab is on the way
+        if (booking.getEmployeeEmail() != null && !booking.getEmployeeEmail().isBlank()) {
+            ChatMessage msg = new ChatMessage();
+            msg.setSenderEmail(booking.getHrEmail() == null ? "hr" : booking.getHrEmail());
+            msg.setSenderRole("hr");
+            msg.setReceiverEmail(booking.getEmployeeEmail());
+            msg.setReceiverRole("employee");
+            msg.setSubject("Cab on the way");
+            String pickup = booking.getPickup() == null ? "(pickup not set)" : booking.getPickup();
+            String time = booking.getPickupTime() == null ? "(time not set)" : booking.getPickupTime();
+            msg.setContent(
+                "Your cab is on the way to pick you up. " +
+                "Pickup: " + pickup + ", Time: " + time + ", Driver: " + assignedDriver.getEmail()
+            );
+            msg.setMessageType("CAB_ON_THE_WAY");
+            msg.setCreatedAt(java.time.LocalDateTime.now().toString());
+            msg.setReadFlag(false);
+            chatRepo.save(msg);
+        }
     }
 
     bookingRepo.save(booking);

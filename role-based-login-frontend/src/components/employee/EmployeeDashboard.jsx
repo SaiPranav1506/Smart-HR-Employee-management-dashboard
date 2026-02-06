@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import TopNav from "../common/TopNav";
 import { authStorage } from "../../auth/storage";
+import LiveMouseBackground from "../common/LiveMouseBackground";
+import { displayNameFromEmail } from "../common/displayName";
 
 const EmployeeDashboard = () => {
   const [work, setWork] = useState([]);
@@ -57,13 +59,31 @@ const EmployeeDashboard = () => {
     <>
       <TopNav title="Employee Dashboard" />
       <div className="page">
+        <LiveMouseBackground />
         <div className="container">
-          <h2 className="hTitle">Employee Dashboard</h2>
+          <section className="dashHero dashHeroEmployee" aria-label="Employee dashboard introduction">
+            <div className="dashHeroInner">
+              <div className="dashHeroKicker">Employee Home</div>
+              <h1 className="dashHeroTitle">Hello {displayNameFromEmail(authStorage.getEmail())}.</h1>
+              <p className="dashHeroText">
+                Welcome back. This page is designed to keep your day organized: review assigned work, complete tasks with
+                a single click, and track cab bookings with driver and status updates. Use the options below to take the
+                next action quickly — no hunting through multiple pages. If something is unclear (task details, timing,
+                pickup changes, or directions), use Chat from the top bar to reach HR or coordinate with a driver while
+                keeping context in one place.
+              </p>
+              <div className="dashHeroActions">
+                <a className="btnPrimary" href="#dash-options">View options</a>
+              </div>
+            </div>
+          </section>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 18, marginTop: 14 }}>
+        <section id="dash-options" className="dashOptions" aria-label="Employee dashboard options">
+        <h2 className="hTitle">Available options</h2>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 18, marginTop: 12 }}>
         <div className="card">
           <div className="cardInner">
-          <h3 style={{ marginTop: 0, color: "#d4af37", fontWeight: 900 }}>My assigned work</h3>
+          <h3 style={{ marginTop: 0, color: "var(--gold)", fontWeight: 900 }}>My assigned work</h3>
           {work.length === 0 ? (
             <p className="subtle">No work assigned yet.</p>
           ) : (
@@ -109,7 +129,7 @@ const EmployeeDashboard = () => {
 
         <div className="card">
           <div className="cardInner">
-          <h3 style={{ marginTop: 0, color: "#d4af37", fontWeight: 900 }}>My cab bookings</h3>
+          <h3 style={{ marginTop: 0, color: "var(--gold)", fontWeight: 900 }}>My cab bookings</h3>
           {bookings.length === 0 ? (
             <p className="subtle">No bookings yet.</p>
           ) : (
@@ -143,6 +163,7 @@ const EmployeeDashboard = () => {
           </div>
         </div>
       </div>
+      </section>
       </div>
       </div>
     </>
