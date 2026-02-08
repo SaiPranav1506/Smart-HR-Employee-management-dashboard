@@ -60,6 +60,14 @@ Create another new service from the same repo.
 Where to get the backend public domain
 - Open the backend service in Railway → Settings/Networking → copy the public URL.
 
+### Troubleshooting: `npm: not found`
+If you see a build error like `/bin/bash: npm: command not found`, it means the service is **not building with the Node provider**.
+
+Fix:
+- Confirm the frontend service **Root directory** is exactly: `role-based-login-frontend`
+- Redeploy so Railway picks up `role-based-login-frontend/nixpacks.toml` and `.nvmrc`
+- Ensure you are using **Nixpacks** (no custom Dockerfile override)
+
 ## 5) Update backend CORS to your frontend domain
 After the frontend deploys, set on the backend service:
 - `app.cors.allowed-origins=https://<YOUR_FRONTEND_PUBLIC_DOMAIN>,http://localhost:3000`
