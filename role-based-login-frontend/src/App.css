@@ -317,6 +317,11 @@ textarea.textarea:focus {
   color: var(--text);
 }
 
+/* Ensure option text is readable (many browsers render the dropdown list with a light background). */
+.authSelect option {
+  color: #000;
+}
+
 .authInput:focus,
 .authSelect:focus {
   box-shadow: var(--glow);

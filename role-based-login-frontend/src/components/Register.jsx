@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import { Link } from 'react-router-dom';
 
-import { API_BASE_URL } from "../api/client";
+import { apiClient, getApiErrorMessage } from "../api/client";
 
 function Register() {
   const [formData, setFormData] = useState({
@@ -37,11 +36,11 @@ function Register() {
         payload.available = formData.available;
       }
 
-      const res = await axios.post(`${API_BASE_URL}/api/auth/register`, payload);
+      const res = await apiClient.post(`/api/auth/register`, payload);
       alert(res.data); // or show some success message
     } catch (err) 
     {
-      alert(err.response?.data || 'Error registering user');
+      alert(getApiErrorMessage(err, 'Error registering user'));
     }
   };
 

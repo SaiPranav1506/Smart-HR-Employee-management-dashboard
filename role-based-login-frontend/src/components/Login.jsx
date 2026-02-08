@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
 
 import { Link } from 'react-router-dom';
@@ -8,7 +7,7 @@ import { authStorage } from "../auth/storage";
 
 import { useNavigate } from 'react-router-dom';
 
-import { API_BASE_URL } from "../api/client";
+import { apiClient, API_BASE_URL, getApiErrorMessage } from "../api/client";
 
 function Login() {
   const [formData, setFormData] = useState({
@@ -33,7 +32,7 @@ function Login() {
     e.preventDefault();
 
     try {
-      const res = await axios.post(`${API_BASE_URL}/api/auth/login`, formData);
+      const res = await apiClient.post(`/api/auth/login`, formData);
 
       // 2FA flow: backend returns a verificationId (usually with HTTP 202)
       if (res.data?.twoFactorRequired && res.data?.verificationId) {
@@ -69,14 +68,14 @@ console.log(decoded)
         alert(`Cannot reach backend at ${API_BASE_URL}. Start the Spring Boot app and try again.`);
         return;
       }
-      alert(err.response?.data || "Login failed");
+      alert(getApiErrorMessage(err, "Login failed"));
     }
   };
 
   const handleVerifyCode = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post(`${API_BASE_URL}/api/auth/verify-2fa`, {
+      const res = await apiClient.post(`/api/auth/verify-2fa`, {
         verificationId,
         code: verificationCode,
       });
@@ -97,7 +96,7 @@ console.log(decoded)
       else if (role === "driver") navigate("/driver-dashboard");
       else navigate("/");
     } catch (err) {
-      alert(err.response?.data || "Verification failed");
+      alert(getApiErrorMessage(err, "Verification failed"));
     }
   };
 
