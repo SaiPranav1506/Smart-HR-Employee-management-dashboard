@@ -18,6 +18,16 @@ public class DeploymentConfigValidator {
 
     @PostConstruct
     public void validate() {
+        if (datasourceUrl != null) {
+            String trimmedUrl = datasourceUrl.trim();
+            if (!trimmedUrl.isEmpty() && !trimmedUrl.startsWith("jdbc:")) {
+                throw new IllegalStateException(
+                        "Invalid SPRING_DATASOURCE_URL. It must start with 'jdbc:' (for MySQL: 'jdbc:mysql://HOST:PORT/DB'). " +
+                                "If you copied a Railway URL that starts with 'mysql://', convert it to JDBC format before setting it on Render."
+                );
+            }
+        }
+
         if (looksLikePlaceholder(datasourceUrl) || looksLikePlaceholder(datasourceUsername) || looksLikePlaceholder(datasourcePassword)) {
             throw new IllegalStateException(
                     "Database config looks like placeholder text. " +
