@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import axios from "axios";
 import { authStorage } from "../../auth/storage";
 
+import { API_BASE_URL } from "../../api/client";
+
 const AddDriver = () => {
   const [form, setForm] = useState({
     name: "",
@@ -21,7 +23,7 @@ const AddDriver = () => {
     const token = authStorage.getToken();
 
     try {
-      const res = await axios.post("http://localhost:8080/api/admin/add-driver", form, {
+      const res = await axios.post(`${API_BASE_URL}/api/admin/add-driver`, form, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

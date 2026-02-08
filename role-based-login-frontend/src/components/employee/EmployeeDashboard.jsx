@@ -5,6 +5,8 @@ import { authStorage } from "../../auth/storage";
 import LiveMouseBackground from "../common/LiveMouseBackground";
 import { displayNameFromEmail } from "../common/displayName";
 
+import { API_BASE_URL } from "../../api/client";
+
 const EmployeeDashboard = () => {
   const [work, setWork] = useState([]);
   const [bookings, setBookings] = useState([]);
@@ -20,10 +22,10 @@ const EmployeeDashboard = () => {
 
     try {
       const [workRes, bookingRes] = await Promise.all([
-        axios.get(`http://localhost:8080/api/employee/my-work?email=${email}`, {
+        axios.get(`${API_BASE_URL}/api/employee/my-work?email=${email}`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
-        axios.get(`http://localhost:8080/api/employee/my-bookings?email=${email}`, {
+        axios.get(`${API_BASE_URL}/api/employee/my-bookings?email=${email}`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
       ]);
@@ -42,7 +44,7 @@ const EmployeeDashboard = () => {
     setBusyId(assignmentId);
     try {
       await axios.put(
-        `http://localhost:8080/api/employee/complete-work?assignmentId=${assignmentId}&employeeEmail=${encodeURIComponent(email)}`,
+        `${API_BASE_URL}/api/employee/complete-work?assignmentId=${assignmentId}&employeeEmail=${encodeURIComponent(email)}`,
         null,
         { headers: { Authorization: `Bearer ${token}` } }
       );

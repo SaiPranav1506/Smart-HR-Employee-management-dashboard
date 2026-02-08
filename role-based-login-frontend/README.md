@@ -2,6 +2,15 @@
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
+## Backend API (local)
+
+This frontend expects the Spring Boot backend to be running at `http://localhost:2222` by default.
+
+- Default API base URL is configured in `src/api/client.js`.
+- To override without code changes, set an environment variable before starting the dev server:
+	- PowerShell: `$env:REACT_APP_API_BASE_URL = "http://localhost:2222"`
+	- Then run: `npm start`
+
 ## Available Scripts
 
 In the project directory, you can run:

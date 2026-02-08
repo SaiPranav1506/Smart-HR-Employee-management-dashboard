@@ -3,6 +3,8 @@ import axios from "axios";
 import TopNav from "../common/TopNav";
 import { authStorage } from "../../auth/storage";
 
+import { API_BASE_URL } from "../../api/client";
+
 const AssignWork = () => {
   const [form, setForm] = useState({
     employeeEmail: "",
@@ -24,7 +26,7 @@ const AssignWork = () => {
 
     try {
       const res = await axios.post(
-        "http://localhost:8080/api/hr/assign-work",
+        `${API_BASE_URL}/api/hr/assign-work`,
         {
           hrEmail,
           employeeEmail: form.employeeEmail,

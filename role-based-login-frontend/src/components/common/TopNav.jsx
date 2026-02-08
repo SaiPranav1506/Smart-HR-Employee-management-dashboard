@@ -3,6 +3,8 @@ import axios from "axios";
 import { NavLink, useNavigate } from "react-router-dom";
 import { authStorage } from "../../auth/storage";
 
+import { API_BASE_URL } from "../../api/client";
+
 const TopNav = ({ title, links = [] }) => {
   const navigate = useNavigate();
   const email = authStorage.getEmail();
@@ -38,10 +40,10 @@ const TopNav = ({ title, links = [] }) => {
 
     try {
       const [listRes, countRes] = await Promise.all([
-        axios.get(`http://localhost:8080/api/hr/notifications?email=${email}`, {
+        axios.get(`${API_BASE_URL}/api/hr/notifications?email=${email}`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
-        axios.get(`http://localhost:8080/api/hr/notifications/unread-count?email=${email}`, {
+        axios.get(`${API_BASE_URL}/api/hr/notifications/unread-count?email=${email}`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
       ]);
@@ -55,7 +57,7 @@ const TopNav = ({ title, links = [] }) => {
   const markRead = async (id) => {
     if (!token) return;
     try {
-      await axios.put(`http://localhost:8080/api/hr/notifications/${id}/read`, null, {
+      await axios.put(`${API_BASE_URL}/api/hr/notifications/${id}/read`, null, {
         headers: { Authorization: `Bearer ${token}` },
       });
       await refreshNotifications();

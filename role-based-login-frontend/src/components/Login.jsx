@@ -8,11 +8,17 @@ import { authStorage } from "../auth/storage";
 
 import { useNavigate } from 'react-router-dom';
 
+import { API_BASE_URL } from "../api/client";
+
 function Login() {
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
+
+  const [twoFactorStep, setTwoFactorStep] = useState(false);
+  const [verificationId, setVerificationId] = useState('');
+  const [verificationCode, setVerificationCode] = useState('');
 
   const navigate = useNavigate();
 
@@ -27,7 +33,15 @@ function Login() {
     e.preventDefault();
 
     try {
-      const res = await axios.post('http://localhost:8080/api/auth/login', formData);
+      const res = await axios.post(`${API_BASE_URL}/api/auth/login`, formData);
+
+      // 2FA flow: backend returns a verificationId (usually with HTTP 202)
+      if (res.data?.twoFactorRequired && res.data?.verificationId) {
+        setTwoFactorStep(true);
+        setVerificationId(res.data.verificationId);
+        alert(res.data?.message || "Verification code sent to your email");
+        return;
+      }
 
       const token = res.data.token;
       
@@ -51,8 +65,39 @@ console.log(decoded)
       else navigate("/");
 
     } catch (err) {
-      
+      if (!err.response) {
+        alert(`Cannot reach backend at ${API_BASE_URL}. Start the Spring Boot app and try again.`);
+        return;
+      }
       alert(err.response?.data || "Login failed");
+    }
+  };
+
+  const handleVerifyCode = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await axios.post(`${API_BASE_URL}/api/auth/verify-2fa`, {
+        verificationId,
+        code: verificationCode,
+      });
+
+      const token = res.data.token;
+      authStorage.clear();
+
+      const decoded = jwtDecode(token);
+      authStorage.setSession({
+        token,
+        email: decoded.sub,
+        role: String(decoded.role || "").toLowerCase(),
+      });
+
+      const role = (decoded.role || "").toLowerCase();
+      if (role === "hr") navigate("/hr-dashboard");
+      else if (role === "employee") navigate("/employee-dashboard");
+      else if (role === "driver") navigate("/driver-dashboard");
+      else navigate("/");
+    } catch (err) {
+      alert(err.response?.data || "Verification failed");
     }
   };
 
@@ -72,33 +117,65 @@ console.log(decoded)
           </Link>
         </div>
 
-        <form onSubmit={handleSubmit} style={{ marginTop: 16 }}>
-          <label className="authLabel">Email</label>
-          <input
-            className="authInput"
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            placeholder="you@company.com"
-            required
-          />
+        {!twoFactorStep ? (
+          <form onSubmit={handleSubmit} style={{ marginTop: 16 }}>
+            <label className="authLabel">Email</label>
+            <input
+              className="authInput"
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="you@company.com"
+              required
+            />
 
-          <label className="authLabel" style={{ marginTop: 12 }}>Password</label>
-          <input
-            className="authInput"
-            type="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            placeholder="••••••••"
-            required
-          />
+            <label className="authLabel" style={{ marginTop: 12 }}>Password</label>
+            <input
+              className="authInput"
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              placeholder="••••••••"
+              required
+            />
 
-          <button type="submit" className="authButton" style={{ marginTop: 16 }}>
-            Login
-          </button>
-        </form>
+            <button type="submit" className="authButton" style={{ marginTop: 16 }}>
+              Login
+            </button>
+          </form>
+        ) : (
+          <form onSubmit={handleVerifyCode} style={{ marginTop: 16 }}>
+            <label className="authLabel">Verification code</label>
+            <input
+              className="authInput"
+              type="text"
+              inputMode="numeric"
+              value={verificationCode}
+              onChange={(e) => setVerificationCode(e.target.value)}
+              placeholder="6-digit code"
+              required
+            />
+
+            <button type="submit" className="authButton" style={{ marginTop: 16 }}>
+              Verify
+            </button>
+
+            <button
+              type="button"
+              className="authButton"
+              style={{ marginTop: 10, background: "transparent" }}
+              onClick={() => {
+                setTwoFactorStep(false);
+                setVerificationId('');
+                setVerificationCode('');
+              }}
+            >
+              Back
+            </button>
+          </form>
+        )}
 
         <div style={{ marginTop: 14, fontSize: 13, color: "#6b7280" }}>
           Don’t have an account? <Link className="authLink" to="/register">Register</Link>

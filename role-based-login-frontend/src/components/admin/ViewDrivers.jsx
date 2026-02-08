@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { authStorage } from "../../auth/storage";
 
+import { API_BASE_URL } from "../../api/client";
+
 const ViewDrivers = () => {
   const [drivers, setDrivers] = useState([]);
 
@@ -13,7 +15,7 @@ const ViewDrivers = () => {
     const token = authStorage.getToken();
 
     try {
-      const response = await axios.get("http://localhost:8080/api/admin/view-drivers", {
+      const response = await axios.get(`${API_BASE_URL}/api/admin/view-drivers`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

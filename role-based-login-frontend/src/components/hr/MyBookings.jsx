@@ -3,6 +3,8 @@ import axios from "axios";
 import TopNav from "../common/TopNav";
 import { authStorage } from "../../auth/storage";
 
+import { API_BASE_URL } from "../../api/client";
+
 const MyBookings = () => {
   const [bookings, setBookings] = useState([]);
 
@@ -17,7 +19,7 @@ const MyBookings = () => {
 
 
     try {
-      const res = await axios.get(`http://localhost:8080/api/hr/mybookings?email=${email}`, {
+      const res = await axios.get(`${API_BASE_URL}/api/hr/mybookings?email=${email}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

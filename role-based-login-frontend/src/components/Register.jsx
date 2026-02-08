@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
 
+import { API_BASE_URL } from "../api/client";
+
 function Register() {
   const [formData, setFormData] = useState({
     username: '',
@@ -35,7 +37,7 @@ function Register() {
         payload.available = formData.available;
       }
 
-      const res = await axios.post('http://localhost:8080/api/auth/register', payload);
+      const res = await axios.post(`${API_BASE_URL}/api/auth/register`, payload);
       alert(res.data); // or show some success message
     } catch (err) 
     {

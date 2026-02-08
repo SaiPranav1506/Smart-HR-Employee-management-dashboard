@@ -971,8 +971,6 @@ textarea.textarea:focus {
 
 .landingViolet .landingTitle {
   margin: 0;
-  font-family: "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont,
-    "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
   font-size: 54px;
   line-height: 1.02;
   letter-spacing: -0.5px;

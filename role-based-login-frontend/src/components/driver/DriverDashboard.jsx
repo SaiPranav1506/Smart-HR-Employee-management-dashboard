@@ -5,6 +5,8 @@ import { authStorage } from "../../auth/storage";
 import LiveMouseBackground from "../common/LiveMouseBackground";
 import { displayNameFromEmail } from "../common/displayName";
 
+import { API_BASE_URL } from "../../api/client";
+
 const DriverDashboard = () => {
   const [trips, setTrips] = useState([]);
   const [driver, setDriver] = useState(null);
@@ -20,7 +22,7 @@ const DriverDashboard = () => {
     const driverEmail = authStorage.getEmail();
 
     try {
-      const res = await axios.get(`http://localhost:8080/api/driver/profile?email=${driverEmail}`, {
+      const res = await axios.get(`${API_BASE_URL}/api/driver/profile?email=${driverEmail}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setDriver(res.data);
@@ -34,7 +36,7 @@ const DriverDashboard = () => {
     const driverEmail = authStorage.getEmail();
 
     try {
-      const response = await axios.get(`http://localhost:8080/api/driver/mytrips?email=${driverEmail}`, {
+      const response = await axios.get(`${API_BASE_URL}/api/driver/mytrips?email=${driverEmail}`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -53,7 +55,7 @@ const DriverDashboard = () => {
     setBusy(true);
     try {
       await axios.put(
-        `http://localhost:8080/api/driver/availability?email=${driverEmail}&available=${!driver.available}`,
+        `${API_BASE_URL}/api/driver/availability?email=${driverEmail}&available=${!driver.available}`,
         null,
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -69,7 +71,7 @@ const DriverDashboard = () => {
     const token = authStorage.getToken();
     setBusy(true);
     try {
-      await axios.put(`http://localhost:8080/api/driver/complete-trip/${bookingId}`, null, {
+      await axios.put(`${API_BASE_URL}/api/driver/complete-trip/${bookingId}`, null, {
         headers: { Authorization: `Bearer ${token}` }
       });
       await fetchMyTrips();

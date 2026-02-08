@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { authStorage } from "../../auth/storage";
 
+import { API_BASE_URL } from "../../api/client";
+
 const AdminDashboard = () => {
   const [bookings, setBookings] = useState([]);
 
@@ -13,7 +15,7 @@ const AdminDashboard = () => {
     const token = authStorage.getToken();
 
     try {
-      const response = await axios.get("http://localhost:8080/api/admin/bookings", {
+      const response = await axios.get(`${API_BASE_URL}/api/admin/bookings`, {
         headers: {
           Authorization: `Bearer ${token}`
         }

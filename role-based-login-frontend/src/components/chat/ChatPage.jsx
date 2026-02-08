@@ -3,7 +3,9 @@ import axios from "axios";
 import TopNav from "../common/TopNav";
 import { authStorage } from "../../auth/storage";
 
-const API = "http://localhost:8080";
+import { API_BASE_URL } from "../../api/client";
+
+const API = API_BASE_URL;
 
 const normalizeRole = (r) => String(r || "").toLowerCase();
 

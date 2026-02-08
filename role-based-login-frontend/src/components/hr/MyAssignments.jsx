@@ -3,6 +3,8 @@ import axios from "axios";
 import TopNav from "../common/TopNav";
 import { authStorage } from "../../auth/storage";
 
+import { API_BASE_URL } from "../../api/client";
+
 const MyAssignments = () => {
   const [assignments, setAssignments] = useState([]);
 
@@ -16,7 +18,7 @@ const MyAssignments = () => {
 
     try {
       const res = await axios.get(
-        `http://localhost:8080/api/hr/my-assignments?email=${email}`,
+        `${API_BASE_URL}/api/hr/my-assignments?email=${email}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setAssignments(res.data);

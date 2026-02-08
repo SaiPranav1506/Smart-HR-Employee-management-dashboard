@@ -3,6 +3,8 @@ import axios from "axios";
 import TopNav from "../common/TopNav";
 import { authStorage } from "../../auth/storage";
 
+import { API_BASE_URL } from "../../api/client";
+
 const MyEmployees = () => {
   const [employees, setEmployees] = useState([]);
 
@@ -17,7 +19,7 @@ const MyEmployees = () => {
 
     try {
       const res = await axios.get(
-        `http://localhost:8080/api/hr/my-employees?email=${email}`,
+        `${API_BASE_URL}/api/hr/my-employees?email=${email}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setEmployees(res.data || []);

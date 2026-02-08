@@ -3,6 +3,8 @@ import axios from "axios";
 import TopNav from "../common/TopNav";
 import { authStorage } from "../../auth/storage";
 
+import { API_BASE_URL } from "../../api/client";
+
 const BookCab = () => {
   const [form, setForm] = useState({
     employeeName: "",
@@ -29,7 +31,7 @@ const BookCab = () => {
   const hrEmail = authStorage.getEmail();
 
   try {
-    const response = await axios.post("http://localhost:8080/api/hr/book", {
+    const response = await axios.post(`${API_BASE_URL}/api/hr/book`, {
       ...form,
       hrEmail: hrEmail, // ✅ Make sure this is passed
     }, {
