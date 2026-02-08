@@ -23,7 +23,7 @@ Create a new service from the same repo.
 - Root directory: `rollbasedlogin`
 
 **Build command**
-- `mvn -DskipTests package`
+- `chmod +x mvnw && ./mvnw -DskipTests package`
 
 **Start command**
 - `java -jar target/*.jar`
@@ -41,6 +41,7 @@ Optional (only if you want OTP emails from Railway)
 
 Notes
 - The backend already supports Railway’s dynamic port via `server.port=${PORT:2222}`.
+- If you see `mvn: command not found`, your service is not using the Java provider; re-check Root directory and redeploy so Railway picks up `rollbasedlogin/nixpacks.toml`.
 
 ## 4) Deploy the frontend service (React)
 Create another new service from the same repo.

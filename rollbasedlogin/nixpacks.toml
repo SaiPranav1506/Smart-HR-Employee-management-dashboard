@@ -1,0 +1,12 @@
+# Forces Railway Nixpacks to use the Java provider for this service.
+# Use this file only in the backend service (root dir: rollbasedlogin).
+
+providers = ["java"]
+
+[phases.build]
+# Use Maven Wrapper so the build doesn't depend on 'mvn' being installed.
+# 'chmod' is safe on Railway's Linux builders and avoids permission issues.
+cmds = ["chmod +x mvnw", "./mvnw -DskipTests package"]
+
+[start]
+cmd = "java -jar target/*.jar"
