@@ -1,0 +1,13 @@
+# Forces Railway Nixpacks to use the Node provider for this service.
+# Use this file only in the frontend service (root dir: role-based-login-frontend).
+
+providers = ["node"]
+
+[phases.install]
+cmds = ["npm ci"]
+
+[phases.build]
+cmds = ["npm run build"]
+
+[start]
+cmd = "npm run start:prod"
