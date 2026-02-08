@@ -17,6 +17,12 @@ public class EmailService {
     @Value("${spring.mail.host:}")
     private String mailHost;
 
+    @Value("${spring.mail.username:}")
+    private String mailUsername;
+
+    @Value("${spring.mail.password:}")
+    private String mailPassword;
+
     @Value("${app.mail.from:}")
     private String from;
 
@@ -41,6 +47,13 @@ public class EmailService {
         if (mailHost == null || mailHost.isBlank()) {
             throw new IllegalStateException(
                     "SMTP is not configured. Set spring.mail.host (and other spring.mail.* properties), or set app.2fa.delivery=log for local testing."
+            );
+        }
+
+        if (mailUsername == null || mailUsername.isBlank() || mailPassword == null || mailPassword.isBlank()) {
+            throw new IllegalStateException(
+                "SMTP credentials are missing. Set SPRING_MAIL_USERNAME and SPRING_MAIL_PASSWORD on your host (Render). " +
+                    "For Gmail, SPRING_MAIL_PASSWORD must be a Google App Password (not your normal Gmail password)."
             );
         }
 
