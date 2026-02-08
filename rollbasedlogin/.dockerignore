@@ -1,0 +1,9 @@
+target/
+.git/
+.idea/
+.vscode/
+*.iml
+*.log
+
+# local-only config/secrets
+src/main/resources/application-local.properties
