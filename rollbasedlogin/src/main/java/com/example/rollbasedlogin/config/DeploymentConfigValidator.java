@@ -31,6 +31,11 @@ public class DeploymentConfigValidator {
         if (value == null) return false;
         String trimmed = value.trim();
         if (trimmed.isEmpty()) return false;
-        return trimmed.contains("<") || trimmed.contains(">") || trimmed.contains("RAILWAY_HOST") || trimmed.contains("RAILWAY_PORT");
+        return trimmed.contains("<")
+                || trimmed.contains(">")
+                || trimmed.contains("RAILWAY_HOST")
+                || trimmed.contains("RAILWAY_PORT")
+                || trimmed.contains("MYSQLHOST")
+                || trimmed.contains("MYSQLPORT");
     }
 }
