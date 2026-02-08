@@ -67,7 +67,7 @@ public class ResendEmailSender {
             int status = response.statusCode();
             if (status < 200 || status >= 300) {
                 String body = response.body();
-                throw new IllegalStateException("Resend API error (HTTP " + status + "): " + (body == null ? "" : body));
+                throw new IllegalStateException(buildResendErrorMessage(status, body, from));
             }
         } catch (IOException e) {
             throw new IllegalStateException("Failed to call Resend API (I/O error).", e);
@@ -79,5 +79,41 @@ public class ResendEmailSender {
         } catch (Exception e) {
             throw new IllegalStateException("Failed to send email via Resend.", e);
         }
+    }
+
+    private String buildResendErrorMessage(int status, String body, String from) {
+        String message = null;
+        String errorName = null;
+
+        if (body != null && !body.isBlank()) {
+            try {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> parsed = objectMapper.readValue(body, Map.class);
+                Object msg = parsed.get("message");
+                Object name = parsed.get("name");
+                if (msg != null) message = String.valueOf(msg);
+                if (name != null) errorName = String.valueOf(name);
+            } catch (Exception ignored) {
+                // Keep fallback behavior below.
+            }
+        }
+
+        String normalized = (message == null ? "" : message).toLowerCase();
+
+        if (status == 401) {
+            return "Resend API rejected the request (HTTP 401). Check that RESEND_API_KEY is correct and not expired/revoked.";
+        }
+
+        if (status == 403 && normalized.contains("domain") && normalized.contains("not verified")) {
+            return "Resend rejected the 'from' domain (HTTP 403): " + (message == null ? "Domain is not verified." : message) + " " +
+                    "Fix: set APP_MAIL_FROM to an address on a domain you own and have verified in Resend (Domains → Add domain). " +
+                    "Gmail/Yahoo/Outlook addresses cannot be used as the Resend 'from' address. Current APP_MAIL_FROM='" + from + "'.";
+        }
+
+        if (message != null && !message.isBlank()) {
+            return "Resend API error (HTTP " + status + "): " + message + (errorName == null ? "" : " (" + errorName + ")");
+        }
+
+        return "Resend API error (HTTP " + status + "): " + (body == null ? "" : body);
     }
 }

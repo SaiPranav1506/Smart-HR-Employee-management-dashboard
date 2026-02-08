@@ -12,6 +12,13 @@ Set these **environment variables on the Render backend service**:
 - `RESEND_API_KEY=...` (from Resend dashboard)
 - `APP_MAIL_FROM=...` (must be a verified sender/domain in Resend)
 
+Important:
+
+- `APP_MAIL_FROM` **cannot** be a Gmail/Yahoo/Outlook address (like `something@gmail.com`). Resend requires you to verify a domain you own.
+- Typical setup:
+	- In Resend: **Domains → Add domain** → add your domain (example: `yourdomain.com`) → add the DNS records (SPF/DKIM) in your domain provider → verify.
+	- On Render: set `APP_MAIL_FROM=noreply@yourdomain.com` (or another address on that verified domain).
+
 Leave your existing `app.2fa.delivery=mail` enabled.
 
 Health check endpoint:
