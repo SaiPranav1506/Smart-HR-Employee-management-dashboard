@@ -9,6 +9,7 @@ function Register() {
     email: '',
     password: '',
     role: 'employee',
+    hrEmail: '',
     cabType: 'Cab',
     available: true,
   });
@@ -30,6 +31,10 @@ function Register() {
         password: formData.password,
         role: formData.role,
       };
+
+      if (formData.role === 'employee') {
+        payload.hrEmail = formData.hrEmail;
+      }
 
       if (formData.role === 'driver') {
         payload.cabType = formData.cabType;
@@ -97,6 +102,21 @@ function Register() {
             <option value="employee">Employee</option>
             <option value="driver">Driver</option>
           </select>
+
+          {formData.role === 'employee' && (
+            <>
+              <label className="authLabel" style={{ marginTop: 12 }}>HR Email</label>
+              <input
+                className="authInput"
+                type="email"
+                name="hrEmail"
+                value={formData.hrEmail}
+                onChange={handleChange}
+                placeholder="hr@company.com"
+                required
+              />
+            </>
+          )}
 
           {formData.role === 'driver' && (
             <div className="authGrid" style={{ marginTop: 12 }}>

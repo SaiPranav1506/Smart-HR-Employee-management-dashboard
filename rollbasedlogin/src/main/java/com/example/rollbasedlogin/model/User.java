@@ -26,6 +26,9 @@ public class User {
 
     private String role;
 
+    // For employees: which HR they belong to (by HR's email)
+    private String hrEmail;
+
 
    public String getEmail()
     {
@@ -57,6 +60,14 @@ public class User {
     {
         this.role=r;
     }
+
+        public String getHrEmail() {
+            return hrEmail;
+        }
+
+        public void setHrEmail(String hrEmail) {
+            this.hrEmail = hrEmail;
+        }
 
     public String getPassword() {
        return this.password;

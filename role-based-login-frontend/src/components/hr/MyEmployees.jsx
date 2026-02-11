@@ -2,11 +2,13 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import TopNav from "../common/TopNav";
 import { authStorage } from "../../auth/storage";
+import { useNavigate } from "react-router-dom";
 
 import { API_BASE_URL } from "../../api/client";
 
 const MyEmployees = () => {
   const [employees, setEmployees] = useState([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchEmployees();
@@ -54,6 +56,7 @@ const MyEmployees = () => {
                 <tr>
                   <th>Name</th>
                   <th>Email</th>
+                  <th>Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -61,6 +64,22 @@ const MyEmployees = () => {
                   <tr key={e.email}>
                     <td>{e.username || "—"}</td>
                     <td>{e.email}</td>
+                    <td>
+                      <button
+                        type="button"
+                        className="btnGhost"
+                        onClick={() =>
+                          navigate("/hr/book-cab", {
+                            state: {
+                              employeeName: e.username || "",
+                              employeeEmail: e.email || "",
+                            },
+                          })
+                        }
+                      >
+                        Book cab 🚕
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>

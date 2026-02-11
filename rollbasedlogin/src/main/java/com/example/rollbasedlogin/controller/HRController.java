@@ -147,6 +147,15 @@ public org.springframework.http.ResponseEntity<String> markRead(@org.springframe
     public List<EmployeeSummary> myEmployees(@RequestParam String email) {
         Set<String> employeeEmails = new HashSet<>();
 
+        // Primary source: employees explicitly registered under this HR.
+        List<com.example.rollbasedlogin.model.User> registeredEmployees = userRepo
+                .findByRoleIgnoreCaseAndHrEmailIgnoreCaseOrderByUsernameAsc("employee", email);
+        for (com.example.rollbasedlogin.model.User u : registeredEmployees) {
+            if (u.getEmail() != null && !u.getEmail().isBlank()) {
+                employeeEmails.add(u.getEmail().trim());
+            }
+        }
+
         List<WorkAssignment> assignments = workRepo.findByHrEmail(email);
         for (WorkAssignment a : assignments) {
             if (a.getEmployeeEmail() != null && !a.getEmployeeEmail().isBlank()) {

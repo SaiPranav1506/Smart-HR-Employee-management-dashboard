@@ -6,6 +6,9 @@ public class RegisterRequest {
     private String password;
     private String role; // hr | employee | driver
 
+    // Employee-only field: HR email used to link employee to a specific HR.
+    private String hrEmail;
+
     // Driver-only fields
     private String cabType;
     private Boolean available;
@@ -40,6 +43,14 @@ public class RegisterRequest {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public String getHrEmail() {
+        return hrEmail;
+    }
+
+    public void setHrEmail(String hrEmail) {
+        this.hrEmail = hrEmail;
     }
 
     public String getCabType() {

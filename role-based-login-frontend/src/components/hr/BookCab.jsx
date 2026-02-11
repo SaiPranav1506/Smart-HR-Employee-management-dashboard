@@ -1,19 +1,31 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import axios from "axios";
 import TopNav from "../common/TopNav";
 import { authStorage } from "../../auth/storage";
+import { useLocation } from "react-router-dom";
 
 import { API_BASE_URL } from "../../api/client";
 
 const BookCab = () => {
-  const [form, setForm] = useState({
-    employeeName: "",
-    employeeEmail: "",
+  const location = useLocation();
+  const prefill = useMemo(() => {
+    const s = location && location.state ? location.state : {};
+    return {
+      employeeName: typeof s.employeeName === "string" ? s.employeeName : "",
+      employeeEmail: typeof s.employeeEmail === "string" ? s.employeeEmail : "",
+    };
+  }, [location]);
+
+  const makeInitialForm = () => ({
+    employeeName: prefill.employeeName,
+    employeeEmail: prefill.employeeEmail,
     pickup: "",
     dropLocation: "",
     pickupTime: "",
     cabType: "Cab",
   });
+
+  const [form, setForm] = useState(() => makeInitialForm());
 
   const [message, setMessage] = useState("");
 
@@ -41,7 +53,7 @@ const BookCab = () => {
     });
 
     setMessage(response.data);
-    setForm({ employeeName: "", employeeEmail: "", pickup: "", dropLocation: "", pickupTime: "", cabType: "Cab" });
+    setForm(makeInitialForm());
   } catch (error) {
     console.error("Booking failed", error);
     setMessage("Something went wrong. Try again.");

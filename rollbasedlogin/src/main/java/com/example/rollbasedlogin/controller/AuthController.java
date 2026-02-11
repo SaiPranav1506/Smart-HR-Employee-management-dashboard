@@ -57,11 +57,28 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("Email already exists");
         }
 
+        String role = request.getRole() == null ? "" : request.getRole().trim();
+        if (role.equalsIgnoreCase("employee")) {
+            String hrEmail = request.getHrEmail();
+            if (hrEmail == null || hrEmail.isBlank()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("HR Email is required for employee registration");
+            }
+
+            Optional<User> hrUser = userRepo.findByEmail(hrEmail.trim());
+            if (hrUser.isEmpty() || hrUser.get().getRole() == null || !hrUser.get().getRole().equalsIgnoreCase("hr")) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid HR Email. Please enter a registered HR email.");
+            }
+        }
+
         User user = new User();
         user.setUsername(request.getUsername());
         user.setEmail(request.getEmail());
         user.setRole(request.getRole());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
+
+        if (role.equalsIgnoreCase("employee")) {
+            user.setHrEmail(request.getHrEmail().trim());
+        }
 
         userRepo.save(user);
 
