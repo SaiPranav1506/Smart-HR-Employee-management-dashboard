@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
+import siteLogo from "../assets/smart-hr-employee-logo.svg";
 
 const Icon = ({ children }) => (
   <span className="landingIcon" aria-hidden="true">
@@ -82,7 +83,10 @@ function MarketingLanding() {
             </button>
 
             <div className="landingBrand">
-              <div className="landingLogo">SmartHR</div>
+              <div className="landingBrandRow">
+                <img className="siteLogo" src={siteLogo} alt="Smart HR- Employee" />
+                <div className="landingLogo">SmartHR</div>
+              </div>
             </div>
           </div>
 

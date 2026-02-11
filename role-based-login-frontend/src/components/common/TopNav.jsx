@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import { NavLink, useNavigate } from "react-router-dom";
 import { authStorage } from "../../auth/storage";
+import siteLogo from "../../assets/smart-hr-employee-logo.svg";
 
 import { API_BASE_URL } from "../../api/client";
 
@@ -90,7 +91,10 @@ const TopNav = ({ title, links = [] }) => {
       <div className="topNavInner">
         <div className="navLeft">
           <div>
-            <div className="navBrand">{title}</div>
+            <div className="navBrand">
+              <img className="siteLogo" src={siteLogo} alt="Smart HR- Employee" />
+              <span>{title}</span>
+            </div>
           </div>
         </div>
 

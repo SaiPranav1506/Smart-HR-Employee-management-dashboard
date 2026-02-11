@@ -392,9 +392,18 @@ textarea.textarea:focus {
 }
 
 .navBrand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
   font-weight: 950;
   letter-spacing: 0.2px;
   color: var(--gold);
+}
+
+.siteLogo {
+  height: 28px;
+  width: auto;
+  display: block;
 }
 
 .navSubtitle {
@@ -628,6 +637,12 @@ textarea.textarea:focus {
 .landingBrand {
   display: grid;
   gap: 2px;
+}
+
+.landingBrandRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .landingLogo {
