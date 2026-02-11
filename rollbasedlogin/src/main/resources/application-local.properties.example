@@ -3,6 +3,13 @@
 # Then fill the values below.
 # IMPORTANT: application-local.properties is gitignored so your secrets won't be committed.
 
+# --- Database (PostgreSQL) ---
+# If you run Postgres locally via Docker or installed service, set these to match.
+# Example: jdbc:postgresql://localhost:5432/rolebased_login
+SPRING_DATASOURCE_URL=
+SPRING_DATASOURCE_USERNAME=
+SPRING_DATASOURCE_PASSWORD=
+
 # --- Gmail SMTP credentials ---
 # Use a Google "App Password" (requires 2-Step Verification enabled on the account).
 # Do NOT use your normal Gmail login password.

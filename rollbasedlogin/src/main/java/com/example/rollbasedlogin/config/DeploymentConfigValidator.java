@@ -36,8 +36,8 @@ public class DeploymentConfigValidator {
             String trimmedUrl = datasourceUrl.trim();
             if (!trimmedUrl.isEmpty() && !trimmedUrl.startsWith("jdbc:")) {
                 throw new IllegalStateException(
-                        "Invalid SPRING_DATASOURCE_URL. It must start with 'jdbc:' (for MySQL: 'jdbc:mysql://HOST:PORT/DB'). " +
-                                "If you copied a Railway URL that starts with 'mysql://', convert it to JDBC format before setting it on Render."
+                        "Invalid SPRING_DATASOURCE_URL. It must start with 'jdbc:' (for PostgreSQL: 'jdbc:postgresql://HOST:PORT/DB'). " +
+                                "If you copied a Render/managed Postgres URL that starts with 'postgres://', convert it to JDBC format first (jdbc:postgresql://...)."
                 );
             }
         }
@@ -46,7 +46,7 @@ public class DeploymentConfigValidator {
             throw new IllegalStateException(
                     "Database config looks like placeholder text. " +
                             "Set real values for SPRING_DATASOURCE_URL / SPRING_DATASOURCE_USERNAME / SPRING_DATASOURCE_PASSWORD in your host (Render), " +
-                            "using the actual host/port/db/user/password from Railway MySQL."
+                            "using the actual host/port/db/user/password from your PostgreSQL provider (for Render Postgres, copy them from the database's connection info page)."
             );
         }
     }
@@ -109,7 +109,9 @@ public class DeploymentConfigValidator {
                 || trimmed.contains(">")
                 || trimmed.contains("RAILWAY_HOST")
                 || trimmed.contains("RAILWAY_PORT")
-                || trimmed.contains("MYSQLHOST")
-                || trimmed.contains("MYSQLPORT");
+            || trimmed.contains("MYSQLHOST")
+            || trimmed.contains("MYSQLPORT")
+            || trimmed.contains("POSTGRES_HOST")
+            || trimmed.contains("POSTGRES_PORT");
     }
 }

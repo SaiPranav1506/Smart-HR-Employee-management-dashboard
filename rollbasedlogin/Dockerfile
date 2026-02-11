@@ -14,10 +14,5 @@ RUN mvn -DskipTests package
 FROM eclipse-temurin:17-jre
 WORKDIR /app
 
-# Render provides $PORT; app reads it via server.port=${PORT:2222}
-ENV PORT=8080
-
 COPY --from=build /app/target/*.jar /app/app.jar
-
-EXPOSE 8080
 CMD ["java", "-jar", "/app/app.jar"]
