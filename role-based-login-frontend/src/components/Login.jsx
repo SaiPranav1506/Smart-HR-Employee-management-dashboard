@@ -15,10 +15,6 @@ function Login() {
     password: ''
   });
 
-  const [twoFactorStep, setTwoFactorStep] = useState(false);
-  const [verificationId, setVerificationId] = useState('');
-  const [verificationCode, setVerificationCode] = useState('');
-
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -33,14 +29,6 @@ function Login() {
 
     try {
       const res = await apiClient.post(`/api/auth/login`, formData);
-
-      // 2FA flow: backend returns a verificationId (usually with HTTP 202)
-      if (res.data?.twoFactorRequired && res.data?.verificationId) {
-        setTwoFactorStep(true);
-        setVerificationId(res.data.verificationId);
-        alert(res.data?.message || "Verification code sent to your email");
-        return;
-      }
 
       const token = res.data.token;
       
@@ -72,34 +60,6 @@ console.log(decoded)
     }
   };
 
-  const handleVerifyCode = async (e) => {
-    e.preventDefault();
-    try {
-      const res = await apiClient.post(`/api/auth/verify-2fa`, {
-        verificationId,
-        code: verificationCode,
-      });
-
-      const token = res.data.token;
-      authStorage.clear();
-
-      const decoded = jwtDecode(token);
-      authStorage.setSession({
-        token,
-        email: decoded.sub,
-        role: String(decoded.role || "").toLowerCase(),
-      });
-
-      const role = (decoded.role || "").toLowerCase();
-      if (role === "hr") navigate("/hr-dashboard");
-      else if (role === "employee") navigate("/employee-dashboard");
-      else if (role === "driver") navigate("/driver-dashboard");
-      else navigate("/");
-    } catch (err) {
-      alert(getApiErrorMessage(err, "Verification failed"));
-    }
-  };
-
   return (
     <div className="authPage">
       <div className="authCard">
@@ -116,65 +76,33 @@ console.log(decoded)
           </Link>
         </div>
 
-        {!twoFactorStep ? (
-          <form onSubmit={handleSubmit} style={{ marginTop: 16 }}>
-            <label className="authLabel">Email</label>
-            <input
-              className="authInput"
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="you@company.com"
-              required
-            />
+        <form onSubmit={handleSubmit} style={{ marginTop: 16 }}>
+          <label className="authLabel">Email</label>
+          <input
+            className="authInput"
+            type="email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            placeholder="you@company.com"
+            required
+          />
 
-            <label className="authLabel" style={{ marginTop: 12 }}>Password</label>
-            <input
-              className="authInput"
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              placeholder="••••••••"
-              required
-            />
+          <label className="authLabel" style={{ marginTop: 12 }}>Password</label>
+          <input
+            className="authInput"
+            type="password"
+            name="password"
+            value={formData.password}
+            onChange={handleChange}
+            placeholder="••••••••"
+            required
+          />
 
-            <button type="submit" className="authButton" style={{ marginTop: 16 }}>
-              Login
-            </button>
-          </form>
-        ) : (
-          <form onSubmit={handleVerifyCode} style={{ marginTop: 16 }}>
-            <label className="authLabel">Verification code</label>
-            <input
-              className="authInput"
-              type="text"
-              inputMode="numeric"
-              value={verificationCode}
-              onChange={(e) => setVerificationCode(e.target.value)}
-              placeholder="6-digit code"
-              required
-            />
-
-            <button type="submit" className="authButton" style={{ marginTop: 16 }}>
-              Verify
-            </button>
-
-            <button
-              type="button"
-              className="authButton"
-              style={{ marginTop: 10, background: "transparent" }}
-              onClick={() => {
-                setTwoFactorStep(false);
-                setVerificationId('');
-                setVerificationCode('');
-              }}
-            >
-              Back
-            </button>
-          </form>
-        )}
+          <button type="submit" className="authButton" style={{ marginTop: 16 }}>
+            Login
+          </button>
+        </form>
 
         <div style={{ marginTop: 14, fontSize: 13, color: "#6b7280" }}>
           Don’t have an account? <Link className="authLink" to="/register">Register</Link>

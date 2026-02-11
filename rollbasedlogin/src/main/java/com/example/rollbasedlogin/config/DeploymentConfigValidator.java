@@ -22,6 +22,12 @@ public class DeploymentConfigValidator {
     @Value("${app.mail.from:}")
     private String mailFrom;
 
+    @Value("${app.2fa.enabled:true}")
+    private boolean twoFactorEnabled;
+
+    @Value("${app.2fa.delivery:mail}")
+    private String twoFactorDelivery;
+
     @PostConstruct
     public void validate() {
         validateResendConfig();
@@ -46,6 +52,17 @@ public class DeploymentConfigValidator {
     }
 
     private void validateResendConfig() {
+        // Only validate Resend when we actually plan to send emails.
+        // This avoids blocking local/dev boots when APP_2FA_DELIVERY=log.
+        if (!twoFactorEnabled) {
+            return;
+        }
+
+        String delivery = (twoFactorDelivery == null ? "mail" : twoFactorDelivery.trim().toLowerCase());
+        if (!"mail".equals(delivery)) {
+            return;
+        }
+
         String provider = (mailProvider == null ? "smtp" : mailProvider.trim().toLowerCase());
         if (!"resend".equals(provider)) {
             return;
@@ -66,7 +83,8 @@ public class DeploymentConfigValidator {
                 throw new IllegalStateException(
                         "APP_MAIL_FROM='" + mailFrom.trim() + "' uses a public email domain ('" + domain + "'). " +
                                 "Resend requires you to verify a domain you own, so Gmail/Yahoo/Outlook addresses cannot be used as the Resend 'from' address. " +
-                                "Fix: add a domain in Resend (Domains → Add domain), verify DNS, then set APP_MAIL_FROM like noreply@yourdomain.com."
+                                "Fix: add a domain in Resend (Domains → Add domain), verify DNS, then set APP_MAIL_FROM like noreply@yourdomain.com. " +
+                                "Temporary workaround: set APP_2FA_DELIVERY=log to boot without sending emails."
                 );
             }
         }
