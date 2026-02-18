@@ -57,45 +57,35 @@ private ChatMessageRepository chatRepo;
 @PostMapping("/book")
 public String bookCab(@RequestBody Booking booking) {
     booking.setBookingDate(LocalDate.now().toString());
-    booking.setStatus("BOOKED");
+    // Driver should accept the ride (no auto assignment)
+    booking.setStatus("REQUESTED");
+    booking.setDriverEmail(null);
 
-    // 🔍 Try to auto-assign driver
-    List<Driver> drivers = driverRepo.findByCabTypeAndAvailable(booking.getCabType(), true);
-    if (!drivers.isEmpty()) {
-        Driver assignedDriver = drivers.get(0); // Pick first available
-        booking.setDriverEmail(assignedDriver.getEmail());
-        booking.setStatus("ASSIGNED");
-
-        // Mark driver as unavailable
-        assignedDriver.setAvailable(false);
-        driverRepo.save(assignedDriver);
-
-        // Notify employee via chat: cab is on the way
-        if (booking.getEmployeeEmail() != null && !booking.getEmployeeEmail().isBlank()) {
-            ChatMessage msg = new ChatMessage();
-            msg.setSenderEmail(booking.getHrEmail() == null ? "hr" : booking.getHrEmail());
-            msg.setSenderRole("hr");
-            msg.setReceiverEmail(booking.getEmployeeEmail());
-            msg.setReceiverRole("employee");
-            msg.setSubject("Cab on the way");
-            String pickup = booking.getPickup() == null ? "(pickup not set)" : booking.getPickup();
-            String time = booking.getPickupTime() == null ? "(time not set)" : booking.getPickupTime();
-            msg.setContent(
-                "Your cab is on the way to pick you up. " +
-                "Pickup: " + pickup + ", Time: " + time + ", Driver: " + assignedDriver.getEmail()
-            );
-            msg.setMessageType("CAB_ON_THE_WAY");
-            msg.setCreatedAt(java.time.LocalDateTime.now().toString());
-            msg.setReadFlag(false);
-            chatRepo.save(msg);
-        }
+    // Notify employee (optional): request created and pending driver acceptance
+    if (booking.getEmployeeEmail() != null && !booking.getEmployeeEmail().isBlank()) {
+        ChatMessage msg = new ChatMessage();
+        msg.setSenderEmail(booking.getHrEmail() == null ? "hr" : booking.getHrEmail());
+        msg.setSenderRole("hr");
+        msg.setReceiverEmail(booking.getEmployeeEmail());
+        msg.setReceiverRole("employee");
+        msg.setSubject("Cab requested");
+        String pickup = booking.getPickup() == null ? "(pickup not set)" : booking.getPickup();
+        String time = booking.getPickupTime() == null ? "(time not set)" : booking.getPickupTime();
+        msg.setContent(
+            "A cab has been requested for you. Waiting for a driver to accept. " +
+            "Pickup: " + pickup + ", Time: " + time + ", Cab Type: " + booking.getCabType()
+        );
+        msg.setMessageType("CAB_REQUESTED");
+        msg.setCreatedAt(java.time.LocalDateTime.now().toString());
+        msg.setReadFlag(false);
+        chatRepo.save(msg);
     }
 
     bookingRepo.save(booking);
     if (booking.getDriverEmail() != null && !booking.getDriverEmail().isBlank()) {
         return "Booking Successful! Driver assigned: " + booking.getDriverEmail();
     }
-    return "Booking Successful! No driver available right now.";
+    return "Booking Successful! Waiting for driver acceptance.";
 }
 
 @PostMapping("/assign-work")

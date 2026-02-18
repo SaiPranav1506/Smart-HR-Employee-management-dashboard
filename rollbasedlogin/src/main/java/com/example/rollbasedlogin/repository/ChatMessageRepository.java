@@ -21,4 +21,17 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
             "   or (lower(m.senderEmail) = lower(:b) and lower(m.receiverEmail) = lower(:a)) " +
             "order by m.id asc")
     List<ChatMessage> conversation(@Param("a") String a, @Param("b") String b);
+
+    // Find all messages for a specific trip/booking
+    @Query("select m from ChatMessage m where m.tripId = :tripId order by m.id asc")
+    List<ChatMessage> findByTripId(@Param("tripId") Long tripId);
+
+    // Find messages between a driver and employee for a specific trip
+    @Query("select m from ChatMessage m " +
+            "where m.tripId = :tripId " +
+            "  and ((lower(m.senderEmail) = lower(:sender) and lower(m.receiverEmail) = lower(:receiver)) " +
+            "    or (lower(m.senderEmail) = lower(:receiver) and lower(m.receiverEmail) = lower(:sender))) " +
+            "order by m.id asc")
+    List<ChatMessage> findTripConversation(@Param("tripId") Long tripId, @Param("sender") String sender, @Param("receiver") String receiver);
 }
+

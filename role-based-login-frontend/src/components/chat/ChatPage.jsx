@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import TopNav from "../common/TopNav";
 import { authStorage } from "../../auth/storage";
+import { Client } from "@stomp/stompjs";
+import SockJS from "sockjs-client";
 
 import { API_BASE_URL } from "../../api/client";
 
@@ -14,6 +16,7 @@ const ChatPage = () => {
   const myEmail = authStorage.getEmail();
   const myRole = normalizeRole(authStorage.getRole());
 
+  const [allowedTargets, setAllowedTargets] = useState([]);
   const [targetRole, setTargetRole] = useState("hr");
   const [contactsByRole, setContactsByRole] = useState({});
   const [receiverEmail, setReceiverEmail] = useState("");
@@ -24,28 +27,32 @@ const ChatPage = () => {
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
 
-  const allowedTargets = useMemo(() => {
-    // keep simple + aligned to your use case
-    if (myRole === "employee") return ["hr", "driver"];
-    if (myRole === "driver") return ["employee", "hr"];
-    if (myRole === "hr") return ["employee", "driver"];
-    if (myRole === "admin") return ["hr", "employee", "driver"];
-    return ["hr", "employee", "driver"];
-  }, [myRole]);
-
-  useEffect(() => {
-    if (!allowedTargets.includes(targetRole)) {
-      setTargetRole(allowedTargets[0] || "hr");
-    }
-  }, [allowedTargets, targetRole]);
-
-  const loadContacts = async (role) => {
+  const loadContactsForMe = async () => {
     try {
-      const res = await axios.get(`${API}/api/chat/contacts?role=${encodeURIComponent(role)}`);
-      return Array.isArray(res.data) ? res.data : [];
+      const res = await axios.get(`${API}/api/chat/contacts-for-me`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const data = res.data || {};
+      const nextAllowed = Array.isArray(data.allowedTargets) ? data.allowedTargets : [];
+      const nextByRole = data.contactsByRole && typeof data.contactsByRole === "object" ? data.contactsByRole : {};
+
+      setAllowedTargets(nextAllowed);
+      setContactsByRole(nextByRole);
+
+      const nextTargetRole = nextAllowed.includes(targetRole) ? targetRole : (nextAllowed[0] || "hr");
+      setTargetRole(nextTargetRole);
+
+      const list = nextByRole[nextTargetRole] || [];
+      const currentIsValid = list.some((c) => String(c?.email || "").toLowerCase() === String(receiverEmail || "").toLowerCase());
+      if (!currentIsValid) {
+        setReceiverEmail((list[0] && list[0].email) || "");
+      }
     } catch (e) {
-      console.error("Failed to load contacts", e);
-      return [];
+      console.error("Failed to load contacts-for-me", e);
+      setAllowedTargets([]);
+      setContactsByRole({});
+      setReceiverEmail("");
     }
   };
 
@@ -64,17 +71,61 @@ const ChatPage = () => {
     }
   };
 
+  // Live updates: subscribe to inbox topics (email + role)
   useEffect(() => {
-    // initial load
-    (async () => {
-      const next = {};
-      for (const r of allowedTargets) {
-        next[r] = await loadContacts(r);
+    const emailKey = String(myEmail || "").trim().toLowerCase();
+    const roleKey = String(myRole || "").trim().toLowerCase();
+    if (!emailKey && !roleKey) return;
+
+    const wsUrl = `${API_BASE_URL}/ws`;
+
+    const client = new Client({
+      // Use SockJS for broader compatibility
+      webSocketFactory: () => new SockJS(wsUrl),
+      reconnectDelay: 2500,
+      heartbeatIncoming: 10000,
+      heartbeatOutgoing: 10000,
+      debug: () => {},
+    });
+
+    client.onConnect = () => {
+      if (emailKey) {
+        client.subscribe(`/topic/inbox.${emailKey}`, () => {
+          refreshInbox();
+        });
       }
-      setContactsByRole(next);
-    })();
+
+      if (roleKey) {
+        client.subscribe(`/topic/inbox.role.${roleKey}`, () => {
+          refreshInbox();
+        });
+      }
+    };
+
+    client.onStompError = (frame) => {
+      console.error("Live chat STOMP error", frame?.headers?.message, frame?.body);
+    };
+
+    client.onWebSocketError = (e) => {
+      console.error("Live chat websocket error", e);
+    };
+
+    client.activate();
+    return () => {
+      try {
+        client.deactivate();
+      } catch {
+        // ignore
+      }
+    };
+    // Intentionally avoid depending on refreshInbox reference changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allowedTargets.join(",")]);
+  }, [myEmail, myRole]);
+
+  useEffect(() => {
+    loadContactsForMe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
 
   useEffect(() => {
     refreshInbox();
@@ -90,7 +141,12 @@ const ChatPage = () => {
 
   const inferredMessageType = useMemo(() => {
     if (myRole === "employee" && targetRole === "hr") return "HR_QUERY";
-    if (myRole === "employee" && targetRole === "driver") return "DRIVER_DIRECTION";
+    if (myRole === "employee" && targetRole === "employee") return "PEER_CHAT";
+    if (myRole === "driver" && targetRole === "hr") return "DRIVER_TO_HR";
+    if (myRole === "driver" && targetRole === "driver") return "DRIVER_PEER";
+    if (myRole === "hr" && targetRole === "employee") return "HR_TO_EMP";
+    if (myRole === "hr" && targetRole === "driver") return "HR_TO_DRIVER";
+    if (myRole === "hr" && targetRole === "hr") return "HR_PEER";
     return "GENERAL";
   }, [myRole, targetRole]);
 
@@ -106,7 +162,7 @@ const ChatPage = () => {
           senderEmail: myEmail,
           senderRole: myRole,
           receiverEmail: receiverEmail || null,
-          receiverRole: receiverEmail ? null : targetRole,
+          receiverRole: null,
           subject: subject || null,
           content,
           messageType: inferredMessageType,
@@ -145,7 +201,7 @@ const ChatPage = () => {
         <div className="container" style={{ maxWidth: 1100 }}>
           <h2 className="hTitle">Chat</h2>
           <div className="subtle" style={{ marginTop: 6 }}>
-            Employees can send queries to HR and directions to drivers.
+            HR ↔ Employees under them, Drivers, and HR peers. Employees ↔ their HR and employees under the same HR. Drivers ↔ all HRs and fellow drivers.
           </div>
 
           <div style={{ height: 14 }} />
@@ -212,9 +268,7 @@ const ChatPage = () => {
                   placeholder={
                     inferredMessageType === "HR_QUERY"
                       ? "Type your HR query..."
-                      : inferredMessageType === "DRIVER_DIRECTION"
-                        ? "Type directions for the driver..."
-                        : "Type your message..."
+                      : "Type your message..."
                   }
                   value={content}
                   onChange={(e) => setContent(e.target.value)}

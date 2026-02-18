@@ -5,6 +5,7 @@ package com.example.rollbasedlogin.controller;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -48,6 +49,7 @@ public class AuthController {
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     @PostMapping("/register")
+    @CacheEvict(cacheNames = {"contactsByRole", "employeesByHr", "driversMerged"}, allEntries = true)
     public ResponseEntity<String> register(@RequestBody RegisterRequest request) {
         if (request.getEmail() == null || request.getEmail().isBlank()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Email is required");

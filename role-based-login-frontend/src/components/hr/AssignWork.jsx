@@ -1,16 +1,28 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import axios from "axios";
 import TopNav from "../common/TopNav";
 import { authStorage } from "../../auth/storage";
+import { useLocation } from "react-router-dom";
 
 import { API_BASE_URL } from "../../api/client";
 
 const AssignWork = () => {
-  const [form, setForm] = useState({
-    employeeEmail: "",
+  const location = useLocation();
+  const prefill = useMemo(() => {
+    const s = location && location.state ? location.state : {};
+    return {
+      employeeName: typeof s.employeeName === "string" ? s.employeeName : "",
+      employeeEmail: typeof s.employeeEmail === "string" ? s.employeeEmail : "",
+    };
+  }, [location]);
+
+  const makeInitialForm = () => ({
+    employeeEmail: prefill.employeeEmail,
     title: "",
     description: "",
   });
+
+  const [form, setForm] = useState(() => makeInitialForm());
 
   const [message, setMessage] = useState("");
 
@@ -38,7 +50,7 @@ const AssignWork = () => {
       );
 
       setMessage(res.data);
-      setForm({ employeeEmail: "", title: "", description: "" });
+      setForm(makeInitialForm());
     } catch (e2) {
       console.error("Assign work failed", e2);
       setMessage("Failed to assign work");
@@ -62,6 +74,15 @@ const AssignWork = () => {
           <div className="card">
             <div className="cardInner">
         <h2 className="hTitle">Assign work</h2>
+
+        {(prefill.employeeName || prefill.employeeEmail) && (
+          <div className="subtle" style={{ marginTop: 6 }}>
+            Selected employee: <span style={{ color: "var(--text)", fontWeight: 900 }}>{prefill.employeeName || "—"}</span>
+            {prefill.employeeEmail ? (
+              <span style={{ marginLeft: 8, opacity: 0.9 }}>({prefill.employeeEmail})</span>
+            ) : null}
+          </div>
+        )}
 
       <form onSubmit={handleSubmit}>
         <label>Employee Email:</label><br />

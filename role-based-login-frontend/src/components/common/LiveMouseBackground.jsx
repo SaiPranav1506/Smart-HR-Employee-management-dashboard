@@ -1,8 +1,8 @@
 import React, { useEffect, useRef } from "react";
 
 /**
- * Subtle, professional mouse-parallax background.
- * Intended to be mounted once per page.
+ * Professional, elegant mouse-parallax background with multiple interactive layers.
+ * Creates smooth, responsive visual effects that follow cursor movement.
  */
 export default function LiveMouseBackground({ className = "" }) {
   const layerRef = useRef(null);
@@ -12,18 +12,22 @@ export default function LiveMouseBackground({ className = "" }) {
     if (!el) return;
 
     let rafId = 0;
-    let clientX = 0;
-    let clientY = 0;
+    let clientX = window.innerWidth / 2;
+    let clientY = window.innerHeight / 2;
 
     const apply = () => {
       rafId = 0;
       const cx = clientX - window.innerWidth / 2;
       const cy = clientY - window.innerHeight / 2;
 
-      el.style.setProperty("--orbAx", `${cx * 0.02}px`);
-      el.style.setProperty("--orbAy", `${cy * 0.02}px`);
-      el.style.setProperty("--orbBx", `${cx * 0.012}px`);
-      el.style.setProperty("--orbBy", `${cy * 0.012}px`);
+      // Multiple parallax layers at different depths
+      el.style.setProperty("--orbAx", `${cx * 0.025}px`);
+      el.style.setProperty("--orbAy", `${cy * 0.025}px`);
+      el.style.setProperty("--orbBx", `${cx * 0.015}px`);
+      el.style.setProperty("--orbBy", `${cy * 0.015}px`);
+      el.style.setProperty("--orbCx", `${cx * 0.008}px`);
+      el.style.setProperty("--orbCy", `${cy * 0.008}px`);
+      el.style.setProperty("--cursorGlow", `${cx}px`, `${cy}px`);
     };
 
     const schedule = () => {
@@ -42,7 +46,7 @@ export default function LiveMouseBackground({ className = "" }) {
       schedule();
     };
 
-    onLeave();
+    apply();
     window.addEventListener("mousemove", onMove);
     window.addEventListener("mouseleave", onLeave);
 
@@ -57,6 +61,8 @@ export default function LiveMouseBackground({ className = "" }) {
     <div ref={layerRef} className={`liveMouseLayerFixed ${className}`} aria-hidden="true">
       <div className="liveOrb liveOrbA" />
       <div className="liveOrb liveOrbB" />
+      <div className="liveOrb liveOrbC" />
+      <div className="cursorGlowEffect" />
     </div>
   );
 }

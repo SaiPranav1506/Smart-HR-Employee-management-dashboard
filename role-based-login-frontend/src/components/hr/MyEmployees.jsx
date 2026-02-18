@@ -65,20 +65,37 @@ const MyEmployees = () => {
                     <td>{e.username || "—"}</td>
                     <td>{e.email}</td>
                     <td>
-                      <button
-                        type="button"
-                        className="btnGhost"
-                        onClick={() =>
-                          navigate("/hr/book-cab", {
-                            state: {
-                              employeeName: e.username || "",
-                              employeeEmail: e.email || "",
-                            },
-                          })
-                        }
-                      >
-                        Book cab 🚕
-                      </button>
+                      <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                        <button
+                          type="button"
+                          className="btnPrimary"
+                          onClick={() =>
+                            navigate("/hr/assign-work", {
+                              state: {
+                                employeeName: e.username || "",
+                                employeeEmail: e.email || "",
+                              },
+                            })
+                          }
+                        >
+                          Assign work 📝
+                        </button>
+
+                        <button
+                          type="button"
+                          className="btnGhost"
+                          onClick={() =>
+                            navigate("/hr/book-cab", {
+                              state: {
+                                employeeName: e.username || "",
+                                employeeEmail: e.email || "",
+                              },
+                            })
+                          }
+                        >
+                          Book cab 🚕
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

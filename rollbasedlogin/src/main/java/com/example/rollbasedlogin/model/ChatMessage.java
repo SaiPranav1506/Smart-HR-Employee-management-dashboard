@@ -29,6 +29,8 @@ public class ChatMessage {
 
     private String messageType; // e.g. HR_QUERY, DRIVER_DIRECTION, GENERAL
 
+    private Long tripId; // Link to booking/trip ID for trip-specific messages
+
     @Column(nullable = false)
     private String createdAt; // keep consistent with Notification.createdAt (String)
 
@@ -109,5 +111,13 @@ public class ChatMessage {
 
     public void setReadFlag(boolean readFlag) {
         this.readFlag = readFlag;
+    }
+
+    public Long getTripId() {
+        return tripId;
+    }
+
+    public void setTripId(Long tripId) {
+        this.tripId = tripId;
     }
 }

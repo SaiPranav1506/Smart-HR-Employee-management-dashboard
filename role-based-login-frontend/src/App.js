@@ -5,6 +5,10 @@ import Login from "./components/Login";
 import Register from "./components/Register";
 import RequireRole from "./auth/RequireRole";
 import MarketingLanding from "./components/MarketingLanding";
+import LiveMouseBackground from "./components/common/LiveMouseBackground";
+import CursorFollower from "./components/common/CursorFollower";
+import FloatingElements from "./components/common/FloatingElements";
+import FloatingChatButton from "./components/common/FloatingChatButton";
 
 // Lazy-load heavier pages to keep Login/Register responsive on first load.
 const AdminDashboard = lazy(() => import("./components/AdminDashboard"));
@@ -23,6 +27,10 @@ const ChatPage = lazy(() => import("./components/chat/ChatPage"));
 function App() {
   return (
     <BrowserRouter>
+      <LiveMouseBackground />
+      <CursorFollower />
+      <FloatingElements />
+      <FloatingChatButton />
       <Suspense fallback={<div className="page">Loading…</div>}>
         <Routes>
           {/* Marketing landing */}

@@ -4,6 +4,7 @@ import TopNav from "../common/TopNav";
 import { authStorage } from "../../auth/storage";
 import LiveMouseBackground from "../common/LiveMouseBackground";
 import { displayNameFromEmail } from "../common/displayName";
+import SendDirections from "./SendDirections";
 
 import { API_BASE_URL } from "../../api/client";
 
@@ -11,6 +12,7 @@ const EmployeeDashboard = () => {
   const [work, setWork] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [busyId, setBusyId] = useState(null);
+  const [expandedBooking, setExpandedBooking] = useState(null);
 
   useEffect(() => {
     fetchAll();
@@ -54,6 +56,21 @@ const EmployeeDashboard = () => {
       alert("Failed to complete work");
     } finally {
       setBusyId(null);
+    }
+  };
+
+  const getStatusColor = (status) => {
+    switch (status?.toUpperCase()) {
+      case "ASSIGNED":
+        return "var(--gold)";
+      case "COMPLETED":
+        return "#4ade80";
+      case "CANCELLED":
+        return "#ff6b6b";
+      case "REQUESTED":
+        return "#3b82f6";
+      default:
+        return "#ccc";
     }
   };
 
@@ -135,32 +152,64 @@ const EmployeeDashboard = () => {
           {bookings.length === 0 ? (
             <p className="subtle">No bookings yet.</p>
           ) : (
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Pickup</th>
-                  <th>Drop</th>
-                  <th>Time</th>
-                  <th>Cab Type</th>
-                  <th>Driver</th>
-                  <th>Status</th>
-                  <th>Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {bookings.map((b) => (
-                  <tr key={b.id}>
-                    <td>{b.pickup}</td>
-                    <td>{b.dropLocation}</td>
-                    <td>{b.pickupTime}</td>
-                    <td>{b.cabType}</td>
-                    <td>{b.driverEmail || "Not Assigned"}</td>
-                    <td>{b.status}</td>
-                    <td>{b.bookingDate}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              {bookings.map((b) => (
+                <div
+                  key={b.id}
+                  style={{
+                    backgroundColor: "rgba(0, 0, 0, 0.2)",
+                    border: "1px solid rgba(255, 215, 0, 0.2)",
+                    borderRadius: "6px",
+                    padding: "12px",
+                    cursor: "pointer",
+                  }}
+                  onClick={() => setExpandedBooking(expandedBooking === b.id ? null : b.id)}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div>
+                      <h4 style={{ marginTop: 0, marginBottom: "6px", color: "var(--gold)" }}>
+                        {b.pickup} → {b.dropLocation}
+                      </h4>
+                      <div style={{ fontSize: "12px", color: "#ccc", lineHeight: "1.5" }}>
+                        <div>⏰ {b.pickupTime} • 🚕 {b.cabType} • 📅 {b.bookingDate}</div>
+                        <div>
+                          🚗 <strong style={{ color: b.driverEmail ? "var(--gold)" : "#ff6b6b" }}>
+                            {b.driverEmail || "Not Assigned"}
+                          </strong>
+                        </div>
+                        <div>
+                          📊 <strong style={{ color: getStatusColor(b.status) }}>
+                            {b.status}
+                          </strong>
+                        </div>
+                      </div>
+                    </div>
+                    <span style={{ color: "var(--gold)", fontSize: "20px" }}>
+                      {expandedBooking === b.id ? "▼" : "▶"}
+                    </span>
+                  </div>
+
+                  {expandedBooking === b.id && b.driverEmail && (
+                    <div style={{ marginTop: "12px", borderTop: "1px solid rgba(255, 215, 0, 0.2)", paddingTop: "12px" }}>
+                      <SendDirections
+                        tripId={b.id}
+                        driverEmail={b.driverEmail}
+                        driverName={b.driverEmail}
+                        employeeEmail={authStorage.getEmail()}
+                        pickup={b.pickup}
+                        dropLocation={b.dropLocation}
+                      />
+                    </div>
+                  )}
+
+                  {expandedBooking === b.id && !b.driverEmail && (
+                    <div style={{ marginTop: "12px", color: "#ff6b6b", fontSize: "12px" }}>
+                      ⚠️ No driver assigned yet. You'll be able to send directions once a driver is assigned.
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           )}
           </div>
         </div>

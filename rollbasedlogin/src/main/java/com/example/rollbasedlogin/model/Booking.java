@@ -21,7 +21,7 @@ public class Booking {
     private String cabType;
 
     private String bookingDate;  // formatted string: yyyy-MM-dd
-    private String status;       // BOOKED / COMPLETED / CANCELLED
+    private String status;       // REQUESTED / ASSIGNED / COMPLETED / CANCELLED
 
     private String hrEmail;
     private String driverEmail; // Assigned driver (nullable)
