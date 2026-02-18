@@ -9,4 +9,4 @@ providers = ["java"]
 cmds = ["chmod +x mvnw", "./mvnw -DskipTests package"]
 
 [start]
-cmd = "java -jar target/*.jar"
+cmd = "java -Xmx512m -Xms256m -jar target/*.jar"
