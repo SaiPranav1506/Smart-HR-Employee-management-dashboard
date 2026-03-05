@@ -25,6 +25,7 @@ import com.example.rollbasedlogin.model.User;
 import com.example.rollbasedlogin.repository.DriverRepository;
 import com.example.rollbasedlogin.repository.UserRepository;
 import com.example.rollbasedlogin.service.TwoFactorService;
+import com.example.rollbasedlogin.util.CountryCodeUtil;
 import com.example.rollbasedlogin.util.JwtUtil;
 
 @RestController
@@ -55,6 +56,22 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Email is required");
         }
 
+        // Validate phone number and country
+        if (request.getPhoneNumber() == null || request.getPhoneNumber().isBlank()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Phone number is required");
+        }
+
+        if (request.getCountry() == null || request.getCountry().isBlank()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Country is required");
+        }
+
+        // Format and validate phone number
+        String formattedPhone = CountryCodeUtil.formatPhoneNumber(request.getCountry(), request.getPhoneNumber());
+        if (!CountryCodeUtil.isValidPhoneNumber(request.getCountry(), formattedPhone)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Invalid phone number for " + request.getCountry() + ". Expected format: " + CountryCodeUtil.getPhonePlaceholder(request.getCountry()));
+        }
+
         if (userRepo.findByEmail(request.getEmail()).isPresent()) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("Email already exists");
         }
@@ -77,6 +94,8 @@ public class AuthController {
         user.setEmail(request.getEmail());
         user.setRole(request.getRole());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setPhoneNumber(formattedPhone);
+        user.setCountry(request.getCountry());
 
         if (role.equalsIgnoreCase("employee")) {
             user.setHrEmail(request.getHrEmail().trim());
@@ -90,7 +109,9 @@ public class AuthController {
             driver.setEmail(request.getEmail());
             driver.setCabType(request.getCabType() == null ? "Cab" : request.getCabType());
             driver.setAvailable(request.getAvailable() == null ? true : request.getAvailable());
+            driver.setPhoneNumber(formattedPhone);  // Set phone number from formatted phone
             driverRepo.save(driver);
+            System.out.println("[DRIVER] Driver registered: " + request.getEmail() + " with phone: " + formattedPhone);
         }
 
         return ResponseEntity.status(HttpStatus.CREATED).body("User registered successfully");

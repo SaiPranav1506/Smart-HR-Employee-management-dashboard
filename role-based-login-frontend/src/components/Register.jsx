@@ -3,6 +3,13 @@ import { Link } from 'react-router-dom';
 
 import { apiClient, getApiErrorMessage } from "../api/client";
 
+const SUPPORTED_COUNTRIES = {
+  USA: { code: '+1', placeholder: '+1 (555) 123-4567' },
+  India: { code: '+91', placeholder: '+91 98765 43210' },
+  UK: { code: '+44', placeholder: '+44 20 7946 0958' },
+  Canada: { code: '+1', placeholder: '+1 (555) 123-4567' },
+};
+
 function Register() {
   const [formData, setFormData] = useState({
     username: '',
@@ -12,17 +19,69 @@ function Register() {
     hrEmail: '',
     cabType: 'Cab',
     available: true,
+    phoneNumber: '',
+    country: 'USA',
+  });
+
+  const [phoneValidation, setPhoneValidation] = useState({
+    isValid: null,
+    message: '',
   });
 
   const handleChange = (e) => {
+    const { name, value } = e.target;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [name]: value
     });
+
+    // Clear phone validation when country changes
+    if (name === 'country') {
+      setPhoneValidation({ isValid: null, message: '' });
+    }
+  };
+
+  const validatePhoneOnSubmit = (country, phone) => {
+    if (!phone || !phone.trim()) {
+      return { isValid: false, message: 'Phone number is required' };
+    }
+
+    // Client-side validation - just check basic format
+    const digitsOnly = phone.replace(/[^0-9+]/g, '');
+    
+    // Check if it starts with + and has country code
+    if (!digitsOnly.includes('+')) {
+      return { isValid: false, message: 'Phone number must include country code (e.g., +1, +91)' };
+    }
+
+    // Check length (10-15 digits is typical for international numbers)
+    if (digitsOnly.length < 12 || digitsOnly.length > 15) {
+      return { isValid: false, message: 'Phone number format seems incorrect' };
+    }
+
+    return { isValid: true, message: 'Valid format ✓' };
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Validate phone and country
+    if (!formData.phoneNumber || !formData.phoneNumber.trim()) {
+      alert('Phone number is required');
+      return;
+    }
+
+    if (!formData.country) {
+      alert('Country is required');
+      return;
+    }
+
+    // Validate phone format
+    const validation = validatePhoneOnSubmit(formData.country, formData.phoneNumber);
+    if (!validation.isValid) {
+      alert('Invalid phone number: ' + validation.message + '\n\nExpected format: ' + SUPPORTED_COUNTRIES[formData.country]?.placeholder);
+      return;
+    }
 
     try {
       const payload = {
@@ -30,6 +89,8 @@ function Register() {
         email: formData.email,
         password: formData.password,
         role: formData.role,
+        phoneNumber: formData.phoneNumber,
+        country: formData.country,
       };
 
       if (formData.role === 'employee') {
@@ -98,10 +159,56 @@ function Register() {
 
           <label className="authLabel" style={{ marginTop: 12 }}>Role</label>
           <select className="authSelect" name="role" value={formData.role} onChange={handleChange}>
-            <option value="hr">HR</option>
-            <option value="employee">Employee</option>
-            <option value="driver">Driver</option>
+            <option value="hr" style={{ color: '#000' }}>HR</option>
+            <option value="employee" style={{ color: '#000' }}>Employee</option>
+            <option value="driver" style={{ color: '#000' }}>Driver</option>
           </select>
+
+          <label className="authLabel" style={{ marginTop: 12 }}>Country</label>
+          <select className="authSelect" name="country" value={formData.country} onChange={handleChange} required>
+            <option value="USA" style={{ color: '#000' }}>United States (+1)</option>
+            <option value="India" style={{ color: '#000' }}>India (+91)</option>
+            <option value="UK" style={{ color: '#000' }}>United Kingdom (+44)</option>
+            <option value="Canada" style={{ color: '#000' }}>Canada (+1)</option>
+          </select>
+
+          <label className="authLabel" style={{ marginTop: 12 }}>Phone Number</label>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <input
+              className="authInput"
+              type="tel"
+              name="phoneNumber"
+              value={formData.phoneNumber}
+              onChange={handleChange}
+              placeholder={SUPPORTED_COUNTRIES[formData.country]?.placeholder || '+1 (555) 123-4567'}
+              required
+              style={{ flex: 1 }}
+            />
+          </div>
+          {formData.phoneNumber && (
+            <div style={{
+              marginTop: 6,
+              fontSize: 12,
+              color: phoneValidation.isValid ? '#10b981' : phoneValidation.isValid === false ? '#ef4444' : '#6b7280',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6
+            }}>
+              <span>{phoneValidation.message || `Format: ${SUPPORTED_COUNTRIES[formData.country]?.placeholder}`}</span>
+            </div>
+          )}
+          {!formData.phoneNumber && (
+            <div style={{
+              marginTop: 6,
+              fontSize: 12,
+              color: '#6b7280',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6
+            }}>
+              <span>Format: {SUPPORTED_COUNTRIES[formData.country]?.placeholder} (Country: {SUPPORTED_COUNTRIES[formData.country]?.code})</span>
+            </div>
+          )}
 
           {formData.role === 'employee' && (
             <>
@@ -123,8 +230,8 @@ function Register() {
               <div>
                 <label className="authLabel">Cab Type</label>
                 <select className="authSelect" name="cabType" value={formData.cabType} onChange={handleChange}>
-                  <option value="Cab">Cab</option>
-                  <option value="Van">Van</option>
+                  <option value="Cab" style={{ color: '#000' }}>Cab</option>
+                  <option value="Van" style={{ color: '#000' }}>Van</option>
                 </select>
               </div>
 
@@ -136,8 +243,8 @@ function Register() {
                   value={String(formData.available)}
                   onChange={(e) => setFormData({ ...formData, available: e.target.value === 'true' })}
                 >
-                  <option value="true">Available</option>
-                  <option value="false">Not Available</option>
+                  <option value="true" style={{ color: '#000' }}>Available</option>
+                  <option value="false" style={{ color: '#000' }}>Not Available</option>
                 </select>
               </div>
             </div>

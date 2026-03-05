@@ -115,4 +115,13 @@ public class Booking {
     public void setDriverEmail(String driverEmail) {
         this.driverEmail = driverEmail;
     }
+
+    // Convenience getters for pickup and destination
+    public String getPickupLocation() {
+        return pickup;
+    }
+
+    public String getDestination() {
+        return dropLocation;
+    }
 }

@@ -4,6 +4,7 @@ import TopNav from "../common/TopNav";
 import { authStorage } from "../../auth/storage";
 import LiveMouseBackground from "../common/LiveMouseBackground";
 import { displayNameFromEmail } from "../common/displayName";
+import TripCommunication from "./TripCommunication";
 
 import { API_BASE_URL } from "../../api/client";
 
@@ -12,6 +13,7 @@ const DriverDashboard = () => {
   const [requests, setRequests] = useState([]);
   const [driver, setDriver] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [pendingOtpBookingId, setPendingOtpBookingId] = useState(null);
 
   const OPENWEATHER_API_KEY = process.env.REACT_APP_OPENWEATHER_API_KEY;
   const DRIVER_LOCATION = "Hyderabad";
@@ -146,12 +148,14 @@ const DriverDashboard = () => {
       await axios.put(`${API_BASE_URL}/api/driver/accept-trip/${bookingId}?email=${driverEmail}`, null, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      setPendingOtpBookingId(bookingId);
       await fetchMyTrips();
       await fetchRideRequests();
       await fetchProfile();
     } catch (e) {
       console.error("Error accepting trip", e);
-      alert("Could not accept trip. Please check availability and try again.");
+      const errorMessage = e.response?.data?.message || e.response?.data || "Could not accept trip. Please check availability and try again.";
+      alert(errorMessage);
     } finally {
       setBusy(false);
     }
@@ -394,6 +398,45 @@ const DriverDashboard = () => {
               </table>
             )}
           </section>
+
+          {/* OTP Verification Modal */}
+          {pendingOtpBookingId && (
+            <div
+              style={{
+                position: "fixed",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: "rgba(0, 0, 0, 0.5)",
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                zIndex: 1000,
+              }}
+              onClick={() => setPendingOtpBookingId(null)}
+            >
+              <div
+                style={{
+                  backgroundColor: "#1f1f1f",
+                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                  borderRadius: 12,
+                  padding: 24,
+                  maxWidth: 500,
+                  minWidth: 400,
+                  boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3)",
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <TripCommunication
+                  tripId={pendingOtpBookingId}
+                  onOtpVerified={() => {
+                    setPendingOtpBookingId(null);
+                  }}
+                />
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </>

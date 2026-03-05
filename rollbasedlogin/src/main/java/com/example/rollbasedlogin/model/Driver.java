@@ -17,6 +17,7 @@ public class Driver {
     private String email;
     private String cabType; // "Cab" or "Van"
     private boolean available = true;
+    private String phoneNumber; // Phone number for OTP delivery
 
     // --- Getters & Setters ---
 
@@ -58,5 +59,13 @@ public class Driver {
 
     public void setAvailable(boolean available) {
         this.available = available;
+    }
+
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
     }
 }

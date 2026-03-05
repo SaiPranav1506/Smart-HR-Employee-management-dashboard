@@ -29,6 +29,12 @@ public class User {
     // For employees: which HR they belong to (by HR's email)
     private String hrEmail;
 
+    // Phone number for OTP delivery
+    private String phoneNumber;
+
+    // Country for phone number (USA, India, UK, Canada)
+    private String country;
+
 
    public String getEmail()
     {
@@ -69,6 +75,22 @@ public class User {
             this.hrEmail = hrEmail;
         }
 
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
+
+    public String getCountry() {
+        return country;
+    }
+
+    public void setCountry(String country) {
+        this.country = country;
+    }
+    
     public String getPassword() {
        return this.password;
     }

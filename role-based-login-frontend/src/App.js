@@ -23,6 +23,10 @@ const AssignWork = lazy(() => import("./components/hr/AssignWork"));
 const MyAssignments = lazy(() => import("./components/hr/MyAssignments"));
 const MyEmployees = lazy(() => import("./components/hr/MyEmployees"));
 const ChatPage = lazy(() => import("./components/chat/ChatPage"));
+const HRPersonalInfoPage = lazy(() => import("./components/PersonalInfo/HRPersonalInfoPage"));
+const EmployeePersonalInfoPage = lazy(() => import("./components/PersonalInfo/EmployeePersonalInfoPage"));
+const DriverPersonalInfoPage = lazy(() => import("./components/PersonalInfo/DriverPersonalInfoPage"));
+const CompleteTrip = lazy(() => import("./components/driver/CompleteTrip"));
 
 function App() {
   return (
@@ -54,13 +58,16 @@ function App() {
           <Route path="/hr/assign-work" element={<RequireRole allowedRoles={["hr"]}><AssignWork /></RequireRole>} />
           <Route path="/hr/my-assignments" element={<RequireRole allowedRoles={["hr"]}><MyAssignments /></RequireRole>} />
           <Route path="/hr/my-employees" element={<RequireRole allowedRoles={["hr"]}><MyEmployees /></RequireRole>} />
+          <Route path="/hr/personal-info" element={<RequireRole allowedRoles={["hr"]}><HRPersonalInfoPage /></RequireRole>} />
 
           {/* Employee Routes */}
           <Route path="/employee-dashboard" element={<RequireRole allowedRoles={["employee"]}><EmployeeDashboard /></RequireRole>} />
+          <Route path="/employee/personal-info" element={<RequireRole allowedRoles={["employee"]}><EmployeePersonalInfoPage /></RequireRole>} />
 
           {/* Driver Routes */}
           <Route path="/driver-dashboard" element={<RequireRole allowedRoles={["driver"]}><DriverDashboard /></RequireRole>} />
-          {/* <Route path="/driver/complete-trip" element={<TripCompletion />} /> */}
+          <Route path="/driver/personal-info" element={<RequireRole allowedRoles={["driver"]}><DriverPersonalInfoPage /></RequireRole>} />
+          <Route path="/driver/complete-trip" element={<RequireRole allowedRoles={["driver"]}><CompleteTrip /></RequireRole>} />
 
           {/* Chat (available for all roles) */}
           <Route path="/chat" element={<RequireRole allowedRoles={["hr", "employee", "driver", "admin"]}><ChatPage /></RequireRole>} />

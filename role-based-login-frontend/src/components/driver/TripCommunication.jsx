@@ -2,8 +2,10 @@ import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { authStorage } from "../../auth/storage";
 import { API_BASE_URL } from "../../api/client";
+import { useNavigate } from "react-router-dom";
 
-const TripCommunication = ({ tripId, employeeEmail, employeeName, pickup, dropLocation, pickupTime }) => {
+const TripCommunication = ({ tripId, employeeEmail, employeeName, pickup, dropLocation, pickupTime, onOtpVerified }) => {
+  const navigate = useNavigate();
   const token = authStorage.getToken();
   const driverEmail = authStorage.getEmail();
 
@@ -14,6 +16,15 @@ const TripCommunication = ({ tripId, employeeEmail, employeeName, pickup, dropLo
   const [error, setError] = useState(null);
   const [messageType, setMessageType] = useState("GENERAL");
   const [expandedMessages, setExpandedMessages] = useState(false);
+  
+  // OTP states
+  const [showOtpVerification, setShowOtpVerification] = useState(false);
+  const [otpCode, setOtpCode] = useState("");
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [otpError, setOtpError] = useState(null);
+  const [otpVerified, setOtpVerified] = useState(false);
+  const [otpAttempts, setOtpAttempts] = useState(0);
+  const [resendCooldown, setResendCooldown] = useState(0);
 
   const loadMessages = useCallback(async () => {
     try {
@@ -34,12 +45,46 @@ const TripCommunication = ({ tripId, employeeEmail, employeeName, pickup, dropLo
     }
   }, [tripId, token]);
 
+  // Check if OTP is verified
+  const checkOtpStatus = useCallback(async () => {
+    try {
+      const response = await axios.get(
+        `${API_BASE_URL}/api/driver/otp-status/${tripId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      if (response.data.otpVerified) {
+        setOtpVerified(true);
+        setShowOtpVerification(false);
+      } else {
+        setShowOtpVerification(true);
+      }
+    } catch (err) {
+      console.error("Error checking OTP status:", err);
+      setShowOtpVerification(true);
+    }
+  }, [tripId, token]);
+
   useEffect(() => {
     loadMessages();
     // Poll for new messages every 5 seconds
     const interval = setInterval(loadMessages, 5000);
     return () => clearInterval(interval);
   }, [loadMessages]);
+
+  // Check OTP verification status on component mount
+  useEffect(() => {
+    checkOtpStatus();
+  }, [checkOtpStatus]);
+
+  // Resend cooldown timer
+  useEffect(() => {
+    if (resendCooldown > 0) {
+      const timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [resendCooldown]);
 
 
   const sendMessage = async (e) => {
@@ -96,6 +141,106 @@ const TripCommunication = ({ tripId, employeeEmail, employeeName, pickup, dropLo
     }
   };
 
+  // Verify OTP code
+  const verifyOtpCode = async (e) => {
+    e.preventDefault();
+    
+    if (!otpCode || otpCode.length !== 6) {
+      setOtpError("OTP must be 6 digits");
+      return;
+    }
+
+    try {
+      setOtpLoading(true);
+      setOtpError(null);
+      
+      const response = await axios.post(
+        `${API_BASE_URL}/api/driver/verify-otp/${tripId}`,
+        { otpCode },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (response.data.success) {
+        setOtpVerified(true);
+        setShowOtpVerification(false);
+        setOtpCode("");
+        setOtpAttempts(0);
+        if (onOtpVerified) {
+          onOtpVerified();
+        }
+      }
+    } catch (err) {
+      console.error("Error verifying OTP:", err);
+      const errorMsg = err.response?.data?.message || "Failed to verify OTP";
+      setOtpError(errorMsg);
+      setOtpAttempts(otpAttempts + 1);
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
+  // Resend OTP
+  const resendOTP = async () => {
+    try {
+      setOtpLoading(true);
+      setOtpError(null);
+      
+      const response = await axios.post(
+        `${API_BASE_URL}/api/driver/resend-otp/${tripId}`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (response.data.success) {
+        setOtpCode("");
+        setOtpAttempts(0);
+        setResendCooldown(30);
+        setOtpError("OTP resent successfully. Check your phone.");
+      }
+    } catch (err) {
+      console.error("Error resending OTP:", err);
+      const errorMsg = err.response?.data?.message || "Failed to resend OTP";
+      setOtpError(errorMsg);
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
+  // Start trip after OTP verification
+  const startTrip = async () => {
+    if (!otpVerified) {
+      setOtpError("Please verify OTP first");
+      return;
+    }
+
+    try {
+      setOtpLoading(true);
+      const response = await axios.put(
+        `${API_BASE_URL}/api/driver/start-trip/${tripId}`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (response.data.success) {
+        alert("Trip started successfully!");
+        // Redirect to complete trip page
+        navigate("/driver/complete-trip");
+      }
+    } catch (err) {
+      console.error("Error starting trip:", err);
+      const errorMsg = err.response?.data?.message || "Failed to start trip";
+      setOtpError(errorMsg);
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
   const unreadCount = messages.filter((m) => !m.readFlag && m.receiverEmail === driverEmail).length;
 
   return (
@@ -139,6 +284,140 @@ const TripCommunication = ({ tripId, employeeEmail, employeeName, pickup, dropLo
 
       {expandedMessages && (
         <div>
+          {/* OTP Verification Section */}
+          {showOtpVerification && !otpVerified && (
+            <div style={{
+              backgroundColor: "rgba(255, 215, 0, 0.1)",
+              border: "2px solid var(--gold)",
+              borderRadius: "8px",
+              padding: "16px",
+              marginBottom: "16px",
+            }}>
+              <h4 style={{ marginTop: 0, color: "var(--gold)", textAlign: "center" }}>
+                🔐 OTP Verification Required
+              </h4>
+              <p style={{ color: "#ddd", textAlign: "center", fontSize: "14px", marginBottom: "12px" }}>
+                Enter the 6-digit OTP sent to your phone to start the trip
+              </p>
+              
+              <form onSubmit={verifyOtpCode} style={{ display: "flex", gap: "8px", flexDirection: "column", alignItems: "center" }}>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="Enter 6-digit OTP"
+                  value={otpCode}
+                  onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  maxLength="6"
+                  disabled={otpLoading}
+                  style={{
+                    width: "200px",
+                    padding: "12px",
+                    borderRadius: "4px",
+                    backgroundColor: "rgba(0, 0, 0, 0.3)",
+                    border: "2px solid var(--gold)",
+                    color: "#ddd",
+                    textAlign: "center",
+                    fontSize: "18px",
+                    letterSpacing: "4px",
+                    fontWeight: "bold",
+                  }}
+                />
+
+                <div style={{ display: "flex", gap: "8px", width: "100%" }}>
+                  <button
+                    type="submit"
+                    disabled={otpLoading || otpCode.length !== 6}
+                    style={{
+                      flex: 1,
+                      padding: "10px",
+                      backgroundColor: "var(--gold)",
+                      color: "#000",
+                      border: "none",
+                      borderRadius: "4px",
+                      cursor: otpLoading || otpCode.length !== 6 ? "not-allowed" : "pointer",
+                      fontWeight: "bold",
+                      opacity: otpLoading || otpCode.length !== 6 ? 0.6 : 1,
+                    }}
+                  >
+                    {otpLoading ? "Verifying..." : "Verify OTP"}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={resendOTP}
+                    disabled={otpLoading || resendCooldown > 0}
+                    style={{
+                      flex: 1,
+                      padding: "10px",
+                      backgroundColor: "rgba(255, 215, 0, 0.2)",
+                      color: "var(--gold)",
+                      border: "1px solid var(--gold)",
+                      borderRadius: "4px",
+                      cursor: otpLoading || resendCooldown > 0 ? "not-allowed" : "pointer",
+                      fontWeight: "bold",
+                      opacity: otpLoading || resendCooldown > 0 ? 0.6 : 1,
+                    }}
+                  >
+                    {resendCooldown > 0 ? `Resend (${resendCooldown}s)` : "Resend"}
+                  </button>
+                </div>
+
+                {otpError && (
+                  <div style={{
+                    color: otpError.includes("resent successfully") ? "#4caf50" : "#ff6b6b",
+                    fontSize: "13px",
+                    marginTop: "8px",
+                    width: "100%",
+                    textAlign: "center",
+                  }}>
+                    {otpError}
+                  </div>
+                )}
+
+                {otpAttempts > 0 && otpAttempts < 3 && (
+                  <div style={{
+                    color: "#ffa500",
+                    fontSize: "12px",
+                    marginTop: "8px",
+                  }}>
+                    Attempts: {otpAttempts}/3
+                  </div>
+                )}
+              </form>
+            </div>
+          )}
+
+          {/* OTP Verified Badge */}
+          {otpVerified && (
+            <div style={{
+              backgroundColor: "rgba(76, 175, 80, 0.1)",
+              border: "2px solid #4caf50",
+              borderRadius: "8px",
+              padding: "12px",
+              marginBottom: "16px",
+              textAlign: "center",
+            }}>
+              <span style={{ color: "#4caf50", fontWeight: "bold" }}>✓ OTP Verified</span>
+              <button
+                onClick={startTrip}
+                disabled={otpLoading}
+                style={{
+                  marginLeft: "12px",
+                  padding: "8px 16px",
+                  backgroundColor: "#4caf50",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor: otpLoading ? "not-allowed" : "pointer",
+                  fontWeight: "bold",
+                  opacity: otpLoading ? 0.6 : 1,
+                }}
+              >
+                {otpLoading ? "Starting..." : "▶ Start Trip"}
+              </button>
+            </div>
+          )}
+
           {/* Messages List */}
           <div
             style={{

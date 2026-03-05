@@ -4,7 +4,7 @@
 FROM maven:3.9-eclipse-temurin-17 AS build
 WORKDIR /app
 
-# Copy only pom first for better Docker layer caching
+# Copy pom first for dependency caching, then source
 COPY pom.xml ./
 COPY src ./src
 

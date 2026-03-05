@@ -13,6 +13,10 @@ public class RegisterRequest {
     private String cabType;
     private Boolean available;
 
+    // Phone number and country for all users (required for OTP)
+    private String phoneNumber;
+    private String country; // USA, India, UK, Canada
+
     public String getUsername() {
         return username;
     }
@@ -67,5 +71,21 @@ public class RegisterRequest {
 
     public void setAvailable(Boolean available) {
         this.available = available;
+    }
+
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
+
+    public String getCountry() {
+        return country;
+    }
+
+    public void setCountry(String country) {
+        this.country = country;
     }
 }

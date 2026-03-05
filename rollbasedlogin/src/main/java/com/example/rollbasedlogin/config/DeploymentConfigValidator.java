@@ -32,15 +32,9 @@ public class DeploymentConfigValidator {
     public void validate() {
         validateResendConfig();
 
-        if (datasourceUrl != null) {
-            String trimmedUrl = datasourceUrl.trim();
-            if (!trimmedUrl.isEmpty() && !trimmedUrl.startsWith("jdbc:")) {
-                throw new IllegalStateException(
-                        "Invalid SPRING_DATASOURCE_URL. It must start with 'jdbc:' (for PostgreSQL: 'jdbc:postgresql://HOST:PORT/DB'). " +
-                                "If you copied a Render/managed Postgres URL that starts with 'postgres://', convert it to JDBC format first (jdbc:postgresql://...)."
-                );
-            }
-        }
+        // URL format validation is no longer needed here.
+        // RenderDatabaseUrlProcessor (EnvironmentPostProcessor) automatically converts
+        // postgres:// and postgresql:// URLs to jdbc:postgresql:// before beans are created.
 
         if (looksLikePlaceholder(datasourceUrl) || looksLikePlaceholder(datasourceUsername) || looksLikePlaceholder(datasourcePassword)) {
             throw new IllegalStateException(
