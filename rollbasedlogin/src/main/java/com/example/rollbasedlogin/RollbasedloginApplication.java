@@ -17,7 +17,7 @@ public class RollbasedloginApplication {
 
 	/**
 	 * Converts Render-style postgres:// URLs into JDBC format before Spring starts.
-	 * Only activates when SPRING_DATASOURCE_URL or DATABASE_URL contains a non-JDBC URL.
+	 * Also fixes jdbc:postgresql://user:pass@host/db URLs (credentials must be separate).
 	 * Has no effect on local development (localhost defaults remain untouched).
 	 */
 	private static void convertDatabaseUrl() {
@@ -25,15 +25,26 @@ public class RollbasedloginApplication {
 		if (raw == null || raw.isBlank()) {
 			raw = System.getenv("DATABASE_URL");
 		}
-		if (raw == null || raw.isBlank() || raw.startsWith("jdbc:")) {
+		if (raw == null || raw.isBlank()) {
 			return;
 		}
 
 		raw = raw.trim();
+
+		// Strip jdbc: prefix so we can parse uniformly with URI
+		boolean hadJdbcPrefix = false;
+		if (raw.startsWith("jdbc:")) {
+			hadJdbcPrefix = true;
+			raw = raw.substring("jdbc:".length());
+		}
+
+		// Normalize: postgres:// → postgresql://
 		if (raw.startsWith("postgres://")) {
 			raw = "postgresql" + raw.substring("postgres".length());
 		}
+
 		if (!raw.startsWith("postgresql://")) {
+			// Not a Postgres URL we can handle — leave it as-is
 			return;
 		}
 
@@ -42,13 +53,19 @@ public class RollbasedloginApplication {
 			String host = uri.getHost();
 			int port = uri.getPort() > 0 ? uri.getPort() : 5432;
 			String path = uri.getPath();
+			String query = uri.getQuery();
 
-			String jdbcUrl = "jdbc:postgresql://" + host + ":" + port
-					+ (path != null ? path : "/postgres");
+			StringBuilder jdbcUrl = new StringBuilder("jdbc:postgresql://")
+					.append(host).append(':').append(port)
+					.append(path != null ? path : "/postgres");
+			if (query != null && !query.isEmpty()) {
+				jdbcUrl.append('?').append(query);
+			}
 
-			System.setProperty("spring.datasource.url", jdbcUrl);
+			System.setProperty("spring.datasource.url", jdbcUrl.toString());
 			System.out.println("[DB-URL] Converted to: " + jdbcUrl);
 
+			// Extract user:pass from the URL and set them as separate properties
 			String userInfo = uri.getUserInfo();
 			if (userInfo != null) {
 				int colon = userInfo.indexOf(':');
