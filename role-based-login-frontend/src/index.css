@@ -1,18 +1,38 @@
 body {
   margin: 0;
-  font-family: Gotham, "Gotham SSm", "Gotham Pro", "Helvetica Neue", Arial, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  font-optical-sizing: auto;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: #000000;
+  background: var(--bg);
   color: var(--text);
-  line-height: 1.45;
+  line-height: 1.5;
+  letter-spacing: -0.011em;
+  transition: background 0.3s ease, color 0.3s ease;
 }
+
+/* --- Professional heading typography --- */
+h1, h2, h3, h4, h5, h6 {
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+  text-wrap: balance;
+}
+
+h1 { font-size: 2.75rem; font-weight: 800; letter-spacing: -0.035em; }
+h2 { font-size: 2rem;    font-weight: 700; letter-spacing: -0.025em; }
+h3 { font-size: 1.5rem;  font-weight: 650; letter-spacing: -0.02em; }
+h4 { font-size: 1.25rem; font-weight: 600; letter-spacing: -0.015em; }
+h5 { font-size: 1rem;    font-weight: 600; letter-spacing: -0.01em; }
+h6 { font-size: 0.875rem;font-weight: 600; letter-spacing: 0; }
 
 button,
 input,
 select,
 textarea {
   font-family: inherit;
+  letter-spacing: inherit;
 }
 
 a {

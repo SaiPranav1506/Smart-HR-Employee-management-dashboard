@@ -130,7 +130,7 @@ public class AuthController {
         }
 
         if (!twoFactorEnabled) {
-            String token = jwtUtil.generateToken(user.getEmail(), user.getRole());
+            String token = jwtUtil.generateToken(user.getEmail(), user.getRole(), user.getUsername());
             return ResponseEntity.ok(new LoginResponse(token, user.getRole()));
         }
 

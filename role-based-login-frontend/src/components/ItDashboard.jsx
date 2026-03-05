@@ -2,10 +2,9 @@ import React from "react";
 import TopNav from "./common/TopNav";
 import LiveMouseBackground from "./common/LiveMouseBackground";
 import { authStorage } from "../auth/storage";
-import { displayNameFromEmail } from "./common/displayName";
 
 function ItDashboard() {
-  const name = displayNameFromEmail(authStorage.getEmail());
+  const name = authStorage.getUsername() || authStorage.getEmail();
   return (
     <>
       <TopNav title="IT Dashboard" />

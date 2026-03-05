@@ -3,10 +3,9 @@ import { Link } from "react-router-dom";
 import TopNav from "./common/TopNav";
 import LiveMouseBackground from "./common/LiveMouseBackground";
 import { authStorage } from "../auth/storage";
-import { displayNameFromEmail } from "./common/displayName";
 
 function AdminDashboard() {
-  const name = displayNameFromEmail(authStorage.getEmail());
+  const name = authStorage.getUsername() || authStorage.getEmail();
   return (
     <>
       <TopNav title="Admin Dashboard" />

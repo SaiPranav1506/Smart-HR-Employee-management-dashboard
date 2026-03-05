@@ -1,6 +1,7 @@
 import React, { Suspense, lazy } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import "./App.css";
+import { ThemeProvider } from "./context/ThemeContext";
 import Login from "./components/Login";
 import Register from "./components/Register";
 import RequireRole from "./auth/RequireRole";
@@ -30,6 +31,7 @@ const CompleteTrip = lazy(() => import("./components/driver/CompleteTrip"));
 
 function App() {
   return (
+    <ThemeProvider>
     <BrowserRouter>
       <LiveMouseBackground />
       <CursorFollower />
@@ -74,6 +76,7 @@ function App() {
         </Routes>
       </Suspense>
     </BrowserRouter>
+    </ThemeProvider>
   );
 }
 

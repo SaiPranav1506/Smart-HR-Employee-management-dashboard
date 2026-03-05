@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { apiClient, getApiErrorMessage } from "../api/client";
+import ThemeToggle from "./common/ThemeToggle";
 
 const SUPPORTED_COUNTRIES = {
   USA: { code: '+1', placeholder: '+1 (555) 123-4567' },
@@ -112,11 +113,12 @@ function Register() {
 
   return (
     <div className="authPage">
+      <ThemeToggle className="authThemeToggle" />
       <div className="authCard">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
           <div>
             <h2 style={{ margin: 0 }}>Create account</h2>
-            <div style={{ marginTop: 6, color: "#6b7280", fontSize: 13 }}>
+            <div style={{ marginTop: 6, color: "var(--muted)", fontSize: 13 }}>
               Choose your role to open the right dashboard.
             </div>
           </div>
@@ -159,17 +161,17 @@ function Register() {
 
           <label className="authLabel" style={{ marginTop: 12 }}>Role</label>
           <select className="authSelect" name="role" value={formData.role} onChange={handleChange}>
-            <option value="hr" style={{ color: '#000' }}>HR</option>
-            <option value="employee" style={{ color: '#000' }}>Employee</option>
-            <option value="driver" style={{ color: '#000' }}>Driver</option>
+            <option value="hr">HR</option>
+            <option value="employee">Employee</option>
+            <option value="driver">Driver</option>
           </select>
 
           <label className="authLabel" style={{ marginTop: 12 }}>Country</label>
           <select className="authSelect" name="country" value={formData.country} onChange={handleChange} required>
-            <option value="USA" style={{ color: '#000' }}>United States (+1)</option>
-            <option value="India" style={{ color: '#000' }}>India (+91)</option>
-            <option value="UK" style={{ color: '#000' }}>United Kingdom (+44)</option>
-            <option value="Canada" style={{ color: '#000' }}>Canada (+1)</option>
+            <option value="USA">United States (+1)</option>
+            <option value="India">India (+91)</option>
+            <option value="UK">United Kingdom (+44)</option>
+            <option value="Canada">Canada (+1)</option>
           </select>
 
           <label className="authLabel" style={{ marginTop: 12 }}>Phone Number</label>
@@ -189,7 +191,7 @@ function Register() {
             <div style={{
               marginTop: 6,
               fontSize: 12,
-              color: phoneValidation.isValid ? '#10b981' : phoneValidation.isValid === false ? '#ef4444' : '#6b7280',
+              color: phoneValidation.isValid ? 'var(--success)' : phoneValidation.isValid === false ? 'var(--error)' : 'var(--muted)',
               display: 'flex',
               alignItems: 'center',
               gap: 6
@@ -201,7 +203,7 @@ function Register() {
             <div style={{
               marginTop: 6,
               fontSize: 12,
-              color: '#6b7280',
+              color: 'var(--muted)',
               display: 'flex',
               alignItems: 'center',
               gap: 6
@@ -230,8 +232,8 @@ function Register() {
               <div>
                 <label className="authLabel">Cab Type</label>
                 <select className="authSelect" name="cabType" value={formData.cabType} onChange={handleChange}>
-                  <option value="Cab" style={{ color: '#000' }}>Cab</option>
-                  <option value="Van" style={{ color: '#000' }}>Van</option>
+                  <option value="Cab">Cab</option>
+                  <option value="Van">Van</option>
                 </select>
               </div>
 
@@ -243,8 +245,8 @@ function Register() {
                   value={String(formData.available)}
                   onChange={(e) => setFormData({ ...formData, available: e.target.value === 'true' })}
                 >
-                  <option value="true" style={{ color: '#000' }}>Available</option>
-                  <option value="false" style={{ color: '#000' }}>Not Available</option>
+                  <option value="true">Available</option>
+                  <option value="false">Not Available</option>
                 </select>
               </div>
             </div>
@@ -255,7 +257,7 @@ function Register() {
           </button>
         </form>
 
-        <div style={{ marginTop: 14, fontSize: 13, color: "#6b7280" }}>
+        <div style={{ marginTop: 14, fontSize: 13, color: "var(--muted)" }}>
           Already have an account? <Link className="authLink" to="/login">Login</Link>
         </div>
       </div>

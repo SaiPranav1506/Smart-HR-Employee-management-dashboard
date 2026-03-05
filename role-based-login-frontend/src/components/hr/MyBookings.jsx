@@ -84,11 +84,11 @@ const MyBookings = () => {
                   <h3 style={{ marginTop: 0, marginBottom: "8px", color: "var(--gold)" }}>
                     {b.employeeName} - {b.pickup} → {b.dropLocation}
                   </h3>
-                  <div style={{ fontSize: "13px", color: "#ccc", lineHeight: "1.6" }}>
+                  <div style={{ fontSize: "13px", color: "var(--muted)", lineHeight: "1.6" }}>
                     <div>📧 {b.employeeEmail || "—"}</div>
                     <div>🚕 {b.cabType} • ⏰ {b.pickupTime} • 📅 {b.bookingDate}</div>
                     <div>
-                      🚗 Driver: <strong style={{ color: b.driverEmail ? "var(--gold)" : "#ff6b6b" }}>
+                      🚗 Driver: <strong style={{ color: b.driverEmail ? "var(--gold)" : "var(--error, #ff6b6b)" }}>
                         {b.driverEmail || "Not Assigned"}
                       </strong>
                     </div>

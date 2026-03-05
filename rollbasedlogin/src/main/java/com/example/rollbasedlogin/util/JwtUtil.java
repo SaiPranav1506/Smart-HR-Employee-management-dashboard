@@ -14,16 +14,30 @@ import org.springframework.stereotype.Component;
 @Component
 public class JwtUtil {
 
-    private static final String SECRET = "thisisaverylongsecretkeyformyjwtandmustbeatleast32chars";
+    @org.springframework.beans.factory.annotation.Value("${JWT_SECRET:thisisaverylongsecretkeyformyjwtandmustbeatleast32chars}")
+    private String secret;
 
-    private final SecretKey key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(
-            java.util.Base64.getEncoder().encodeToString(SECRET.getBytes())
-    ));
+    private SecretKey key;
+
+    @jakarta.annotation.PostConstruct
+    private void init() {
+        key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(
+                java.util.Base64.getEncoder().encodeToString(secret.getBytes())
+        ));
+    }
 
     public String generateToken(String email, String role) {
-        return Jwts.builder()
+        return generateToken(email, role, null);
+    }
+
+    public String generateToken(String email, String role, String username) {
+        var builder = Jwts.builder()
                 .setSubject(email)
-                .claim("role", role)
+                .claim("role", role);
+        if (username != null) {
+            builder.claim("username", username);
+        }
+        return builder
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + 3600 * 1000)) // 1 hour
                 .signWith(key)

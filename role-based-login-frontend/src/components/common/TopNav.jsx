@@ -3,6 +3,7 @@ import axios from "axios";
 import { NavLink, useNavigate } from "react-router-dom";
 import { authStorage } from "../../auth/storage";
 import siteLogo from "../../assets/smart-hr-employee-logo.svg";
+import ThemeToggle from "./ThemeToggle";
 
 import { API_BASE_URL } from "../../api/client";
 
@@ -210,6 +211,7 @@ const TopNav = ({ title, links = [] }) => {
             </div>
           )}
 
+          <ThemeToggle />
           <button type="button" className="btnGhost" onClick={logout}>Logout</button>
         </div>
       </div>

@@ -3,7 +3,7 @@ import axios from "axios";
 import TopNav from "../common/TopNav";
 import { authStorage } from "../../auth/storage";
 import LiveMouseBackground from "../common/LiveMouseBackground";
-import { displayNameFromEmail } from "../common/displayName";
+
 import SendDirections from "./SendDirections";
 
 import { API_BASE_URL } from "../../api/client";
@@ -83,7 +83,7 @@ const EmployeeDashboard = () => {
           <section className="dashHero dashHeroEmployee" aria-label="Employee dashboard introduction">
             <div className="dashHeroInner">
               <div className="dashHeroKicker">Employee Home</div>
-              <h1 className="dashHeroTitle">Hello {displayNameFromEmail(authStorage.getEmail())}.</h1>
+              <h1 className="dashHeroTitle">Hello {authStorage.getUsername() || authStorage.getEmail()}.</h1>
               <p className="dashHeroText">
                 Welcome back. This page is designed to keep your day organized: review assigned work, complete tasks with
                 a single click, and track cab bookings with driver and status updates. Use the options below to take the
@@ -170,10 +170,10 @@ const EmployeeDashboard = () => {
                       <h4 style={{ marginTop: 0, marginBottom: "6px", color: "var(--gold)" }}>
                         {b.pickup} → {b.dropLocation}
                       </h4>
-                      <div style={{ fontSize: "12px", color: "#ccc", lineHeight: "1.5" }}>
+                      <div style={{ fontSize: "12px", color: "var(--muted)", lineHeight: "1.5" }}>
                         <div>⏰ {b.pickupTime} • 🚕 {b.cabType} • 📅 {b.bookingDate}</div>
                         <div>
-                          🚗 <strong style={{ color: b.driverEmail ? "var(--gold)" : "#ff6b6b" }}>
+                          🚗 <strong style={{ color: b.driverEmail ? "var(--gold)" : "var(--error, #ff6b6b)" }}>
                             {b.driverEmail || "Not Assigned"}
                           </strong>
                         </div>
@@ -203,7 +203,7 @@ const EmployeeDashboard = () => {
                   )}
 
                   {expandedBooking === b.id && !b.driverEmail && (
-                    <div style={{ marginTop: "12px", color: "#ff6b6b", fontSize: "12px" }}>
+                    <div style={{ marginTop: "12px", color: "var(--error, #ff6b6b)", fontSize: "12px" }}>
                       ⚠️ No driver assigned yet. You'll be able to send directions once a driver is assigned.
                     </div>
                   )}

@@ -4,12 +4,11 @@ import axios from "axios";
 import TopNav from "./common/TopNav";
 import LiveMouseBackground from "./common/LiveMouseBackground";
 import { authStorage } from "../auth/storage";
-import { displayNameFromEmail } from "./common/displayName";
 import TripCommunication from "./driver/TripCommunication";
 import { API_BASE_URL } from "../api/client";
 
 function DriverDashBoard() {
-  const name = displayNameFromEmail(authStorage.getEmail());
+  const name = authStorage.getUsername() || authStorage.getEmail();
   const driverEmail = authStorage.getEmail();
   const token = authStorage.getToken();
   
@@ -136,16 +135,16 @@ function DriverDashBoard() {
             <div className="cardInner">
               <h3 style={{ marginTop: 0, color: "var(--gold)", fontWeight: 900 }}>Current Weather</h3>
               {loading ? (
-                <div style={{ color: "#999" }}>Loading weather data...</div>
+                <div style={{ color: "var(--muted)" }}>Loading weather data...</div>
               ) : error ? (
-                <div style={{ color: "#f44" }}>{error}</div>
+                <div style={{ color: "var(--error, #f44)" }}>{error}</div>
               ) : weather ? (
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <div>
                     <div style={{ fontSize: "48px", marginBottom: "8px" }}>
                       {getWeatherEmoji(weather.weatherCode)}
                     </div>
-                    <div style={{ fontSize: "14px", color: "#ccc", marginTop: "4px" }}>
+                    <div style={{ fontSize: "14px", color: "var(--muted)", marginTop: "4px" }}>
                       {weather.condition}
                     </div>
                   </div>
@@ -154,7 +153,7 @@ function DriverDashBoard() {
                       {Math.round(weather.temperature)}°C
                     </div>
                     {weather.tempMax && weather.tempMin && (
-                      <div style={{ fontSize: "12px", color: "#999", marginTop: "4px" }}>
+                      <div style={{ fontSize: "12px", color: "var(--muted)", marginTop: "4px" }}>
                         High: {Math.round(weather.tempMax)}°C / Low: {Math.round(weather.tempMin)}°C
                       </div>
                     )}
@@ -183,9 +182,9 @@ function DriverDashBoard() {
                 Assigned Trips ({trips.length})
               </h3>
               {loadingTrips ? (
-                <div style={{ color: "#999" }}>Loading assigned trips...</div>
+                <div style={{ color: "var(--muted)" }}>Loading assigned trips...</div>
               ) : trips.length === 0 ? (
-                <div style={{ color: "#999" }}>No trips currently assigned to you.</div>
+                <div style={{ color: "var(--muted)" }}>No trips currently assigned to you.</div>
               ) : (
                 <div style={{ marginTop: "12px" }}>
                   {trips.map((trip) => (

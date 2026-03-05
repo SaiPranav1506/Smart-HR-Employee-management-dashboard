@@ -3,9 +3,8 @@ import TopNav from "./common/TopNav";
 import React from "react";
 import { authStorage } from "../auth/storage";
 import LiveMouseBackground from "./common/LiveMouseBackground";
-import { displayNameFromEmail } from "./common/displayName";
 function HrDashBoard() {
-  const name = displayNameFromEmail(authStorage.getEmail());
+  const name = authStorage.getUsername() || authStorage.getEmail();
   return (
   <>
     <TopNav

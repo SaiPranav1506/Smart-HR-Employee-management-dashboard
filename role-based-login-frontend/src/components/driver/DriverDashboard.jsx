@@ -3,7 +3,7 @@ import axios from "axios";
 import TopNav from "../common/TopNav";
 import { authStorage } from "../../auth/storage";
 import LiveMouseBackground from "../common/LiveMouseBackground";
-import { displayNameFromEmail } from "../common/displayName";
+
 import TripCommunication from "./TripCommunication";
 
 import { API_BASE_URL } from "../../api/client";
@@ -230,7 +230,7 @@ const DriverDashboard = () => {
           <section className="dashHero dashHeroDriver" aria-label="Driver dashboard introduction">
             <div className="dashHeroInner">
               <div className="dashHeroKicker">Driver Home</div>
-              <h1 className="dashHeroTitle">Hello {displayNameFromEmail(authStorage.getEmail())}.</h1>
+              <h1 className="dashHeroTitle">Hello {authStorage.getUsername() || authStorage.getEmail()}.</h1>
               <p className="dashHeroText">
                 Thanks for keeping things moving. This page helps you stay on top of your shift: set availability, review
                 assigned trips, and mark trips complete when finished so HR and employees see real-time status. Keep your
