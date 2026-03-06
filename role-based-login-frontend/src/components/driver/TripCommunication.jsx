@@ -282,142 +282,142 @@ const TripCommunication = ({ tripId, employeeEmail, employeeName, pickup, dropLo
         </span>
       </div>
 
-      {expandedMessages && (
-        <div>
-          {/* OTP Verification Section */}
-          {showOtpVerification && !otpVerified && (
-            <div style={{
-              backgroundColor: "rgba(255, 215, 0, 0.1)",
-              border: "2px solid var(--gold)",
-              borderRadius: "8px",
-              padding: "16px",
-              marginBottom: "16px",
-            }}>
-              <h4 style={{ marginTop: 0, color: "var(--gold)", textAlign: "center" }}>
-                🔐 OTP Verification Required
-              </h4>
-              <p style={{ color: "#ddd", textAlign: "center", fontSize: "14px", marginBottom: "12px" }}>
-                Enter the 6-digit OTP sent to your phone to start the trip
-              </p>
-              
-              <form onSubmit={verifyOtpCode} style={{ display: "flex", gap: "8px", flexDirection: "column", alignItems: "center" }}>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  placeholder="Enter 6-digit OTP"
-                  value={otpCode}
-                  onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                  maxLength="6"
-                  disabled={otpLoading}
-                  style={{
-                    width: "200px",
-                    padding: "12px",
-                    borderRadius: "4px",
-                    backgroundColor: "rgba(0, 0, 0, 0.3)",
-                    border: "2px solid var(--gold)",
-                    color: "#ddd",
-                    textAlign: "center",
-                    fontSize: "18px",
-                    letterSpacing: "4px",
-                    fontWeight: "bold",
-                  }}
-                />
+      {/* OTP Verification Section - always visible (not behind expand toggle) */}
+      {showOtpVerification && !otpVerified && (
+        <div style={{
+          backgroundColor: "rgba(255, 215, 0, 0.1)",
+          border: "2px solid var(--gold)",
+          borderRadius: "8px",
+          padding: "16px",
+          marginBottom: "16px",
+        }}>
+          <h4 style={{ marginTop: 0, color: "var(--gold)", textAlign: "center" }}>
+            🔐 OTP Verification Required
+          </h4>
+          <p style={{ color: "#ddd", textAlign: "center", fontSize: "14px", marginBottom: "12px" }}>
+            Enter the 6-digit OTP sent to your phone to start the trip
+          </p>
+          
+          <form onSubmit={verifyOtpCode} style={{ display: "flex", gap: "8px", flexDirection: "column", alignItems: "center" }}>
+            <input
+              type="text"
+              inputMode="numeric"
+              placeholder="Enter 6-digit OTP"
+              value={otpCode}
+              onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              maxLength="6"
+              disabled={otpLoading}
+              style={{
+                width: "200px",
+                padding: "12px",
+                borderRadius: "4px",
+                backgroundColor: "rgba(0, 0, 0, 0.3)",
+                border: "2px solid var(--gold)",
+                color: "#ddd",
+                textAlign: "center",
+                fontSize: "18px",
+                letterSpacing: "4px",
+                fontWeight: "bold",
+              }}
+            />
 
-                <div style={{ display: "flex", gap: "8px", width: "100%" }}>
-                  <button
-                    type="submit"
-                    disabled={otpLoading || otpCode.length !== 6}
-                    style={{
-                      flex: 1,
-                      padding: "10px",
-                      backgroundColor: "var(--gold)",
-                      color: "#000",
-                      border: "none",
-                      borderRadius: "4px",
-                      cursor: otpLoading || otpCode.length !== 6 ? "not-allowed" : "pointer",
-                      fontWeight: "bold",
-                      opacity: otpLoading || otpCode.length !== 6 ? 0.6 : 1,
-                    }}
-                  >
-                    {otpLoading ? "Verifying..." : "Verify OTP"}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={resendOTP}
-                    disabled={otpLoading || resendCooldown > 0}
-                    style={{
-                      flex: 1,
-                      padding: "10px",
-                      backgroundColor: "rgba(255, 215, 0, 0.2)",
-                      color: "var(--gold)",
-                      border: "1px solid var(--gold)",
-                      borderRadius: "4px",
-                      cursor: otpLoading || resendCooldown > 0 ? "not-allowed" : "pointer",
-                      fontWeight: "bold",
-                      opacity: otpLoading || resendCooldown > 0 ? 0.6 : 1,
-                    }}
-                  >
-                    {resendCooldown > 0 ? `Resend (${resendCooldown}s)` : "Resend"}
-                  </button>
-                </div>
-
-                {otpError && (
-                  <div style={{
-                    color: otpError.includes("resent successfully") ? "#4caf50" : "#ff6b6b",
-                    fontSize: "13px",
-                    marginTop: "8px",
-                    width: "100%",
-                    textAlign: "center",
-                  }}>
-                    {otpError}
-                  </div>
-                )}
-
-                {otpAttempts > 0 && otpAttempts < 3 && (
-                  <div style={{
-                    color: "#ffa500",
-                    fontSize: "12px",
-                    marginTop: "8px",
-                  }}>
-                    Attempts: {otpAttempts}/3
-                  </div>
-                )}
-              </form>
-            </div>
-          )}
-
-          {/* OTP Verified Badge */}
-          {otpVerified && (
-            <div style={{
-              backgroundColor: "rgba(76, 175, 80, 0.1)",
-              border: "2px solid #4caf50",
-              borderRadius: "8px",
-              padding: "12px",
-              marginBottom: "16px",
-              textAlign: "center",
-            }}>
-              <span style={{ color: "#4caf50", fontWeight: "bold" }}>✓ OTP Verified</span>
+            <div style={{ display: "flex", gap: "8px", width: "100%" }}>
               <button
-                onClick={startTrip}
-                disabled={otpLoading}
+                type="submit"
+                disabled={otpLoading || otpCode.length !== 6}
                 style={{
-                  marginLeft: "12px",
-                  padding: "8px 16px",
-                  backgroundColor: "#4caf50",
-                  color: "#fff",
+                  flex: 1,
+                  padding: "10px",
+                  backgroundColor: "var(--gold)",
+                  color: "#000",
                   border: "none",
                   borderRadius: "4px",
-                  cursor: otpLoading ? "not-allowed" : "pointer",
+                  cursor: otpLoading || otpCode.length !== 6 ? "not-allowed" : "pointer",
                   fontWeight: "bold",
-                  opacity: otpLoading ? 0.6 : 1,
+                  opacity: otpLoading || otpCode.length !== 6 ? 0.6 : 1,
                 }}
               >
-                {otpLoading ? "Starting..." : "▶ Start Trip"}
+                {otpLoading ? "Verifying..." : "Verify OTP"}
+              </button>
+
+              <button
+                type="button"
+                onClick={resendOTP}
+                disabled={otpLoading || resendCooldown > 0}
+                style={{
+                  flex: 1,
+                  padding: "10px",
+                  backgroundColor: "rgba(255, 215, 0, 0.2)",
+                  color: "var(--gold)",
+                  border: "1px solid var(--gold)",
+                  borderRadius: "4px",
+                  cursor: otpLoading || resendCooldown > 0 ? "not-allowed" : "pointer",
+                  fontWeight: "bold",
+                  opacity: otpLoading || resendCooldown > 0 ? 0.6 : 1,
+                }}
+              >
+                {resendCooldown > 0 ? `Resend (${resendCooldown}s)` : "Resend"}
               </button>
             </div>
-          )}
 
+            {otpError && (
+              <div style={{
+                color: otpError.includes("resent successfully") ? "#4caf50" : "#ff6b6b",
+                fontSize: "13px",
+                marginTop: "8px",
+                width: "100%",
+                textAlign: "center",
+              }}>
+                {otpError}
+              </div>
+            )}
+
+            {otpAttempts > 0 && otpAttempts < 3 && (
+              <div style={{
+                color: "#ffa500",
+                fontSize: "12px",
+                marginTop: "8px",
+              }}>
+                Attempts: {otpAttempts}/3
+              </div>
+            )}
+          </form>
+        </div>
+      )}
+
+      {/* OTP Verified Badge - always visible */}
+      {otpVerified && (
+        <div style={{
+          backgroundColor: "rgba(76, 175, 80, 0.1)",
+          border: "2px solid #4caf50",
+          borderRadius: "8px",
+          padding: "12px",
+          marginBottom: "16px",
+          textAlign: "center",
+        }}>
+          <span style={{ color: "#4caf50", fontWeight: "bold" }}>✓ OTP Verified</span>
+          <button
+            onClick={startTrip}
+            disabled={otpLoading}
+            style={{
+              marginLeft: "12px",
+              padding: "8px 16px",
+              backgroundColor: "#4caf50",
+              color: "#fff",
+              border: "none",
+              borderRadius: "4px",
+              cursor: otpLoading ? "not-allowed" : "pointer",
+              fontWeight: "bold",
+              opacity: otpLoading ? 0.6 : 1,
+            }}
+          >
+            {otpLoading ? "Starting..." : "▶ Start Trip"}
+          </button>
+        </div>
+      )}
+
+      {expandedMessages && (
+        <div>
           {/* Messages List */}
           <div
             style={{

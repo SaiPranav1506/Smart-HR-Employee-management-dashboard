@@ -1,5 +1,5 @@
 import React, { Suspense, lazy } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import "./App.css";
 import { ThemeProvider } from "./context/ThemeContext";
 import Login from "./components/Login";
@@ -73,6 +73,9 @@ function App() {
 
           {/* Chat (available for all roles) */}
           <Route path="/chat" element={<RequireRole allowedRoles={["hr", "employee", "driver", "admin"]}><ChatPage /></RequireRole>} />
+
+          {/* Catch-all: redirect unknown paths to login */}
+          <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </Suspense>
     </BrowserRouter>

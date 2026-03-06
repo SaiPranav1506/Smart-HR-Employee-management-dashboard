@@ -10,4 +10,7 @@ cmds = ["npm ci"]
 cmds = ["npm run build"]
 
 [start]
+cmd = "npx serve -s build -l ${PORT:-3000}"
+
+[start]
 cmd = "npm run start:prod"
