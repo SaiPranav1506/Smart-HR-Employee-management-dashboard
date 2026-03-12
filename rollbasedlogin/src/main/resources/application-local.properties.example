@@ -3,9 +3,21 @@
 # Then fill the values below.
 # IMPORTANT: application-local.properties is gitignored so your secrets won't be committed.
 
-# --- Database (PostgreSQL) ---
-# If you run Postgres locally via Docker or installed service, set these to match.
-# Example: jdbc:postgresql://localhost:5432/rolebased_login
+# --- Database (Supabase PostgreSQL) ---
+# Option 1: Local development with local Postgres
+#   SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/rolebased_login
+#   SPRING_DATASOURCE_USERNAME=postgres
+#   SPRING_DATASOURCE_PASSWORD=your_local_password
+#
+# Option 2: Connect directly to Supabase (get from Supabase Dashboard → Settings → Database → Connection string → JDBC)
+#   SPRING_DATASOURCE_URL=jdbc:postgresql://db.YOUR_PROJECT_REF.supabase.co:5432/postgres?sslmode=require
+#   SPRING_DATASOURCE_USERNAME=postgres
+#   SPRING_DATASOURCE_PASSWORD=your_supabase_db_password
+#
+# Option 3: Supabase connection pooler (recommended for production)
+#   SPRING_DATASOURCE_URL=jdbc:postgresql://aws-0-REGION.pooler.supabase.com:6543/postgres?sslmode=require
+#   SPRING_DATASOURCE_USERNAME=postgres.YOUR_PROJECT_REF
+#   SPRING_DATASOURCE_PASSWORD=your_supabase_db_password
 SPRING_DATASOURCE_URL=
 SPRING_DATASOURCE_USERNAME=
 SPRING_DATASOURCE_PASSWORD=

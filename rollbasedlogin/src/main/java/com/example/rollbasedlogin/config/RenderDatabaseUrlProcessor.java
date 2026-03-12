@@ -10,19 +10,23 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Automatically converts Render-style {@code postgres://} or {@code postgresql://}
- * database URLs into the JDBC format that Spring/HikariCP expects.
+ * Automatically converts non-JDBC PostgreSQL URLs (from Render, Supabase, etc.)
+ * into the JDBC format that Spring/HikariCP expects.
  *
  * <p>Resolution order:
  * <ol>
  *   <li>{@code SPRING_DATASOURCE_URL} / {@code spring.datasource.url}</li>
- *   <li>{@code DATABASE_URL} (set automatically by Render when you link a Postgres DB)</li>
+ *   <li>{@code DATABASE_URL} (set automatically by Render/Supabase when you link a Postgres DB)</li>
  * </ol>
  *
  * <p>If the value starts with {@code postgres://} or {@code postgresql://}, it is
- * rewritten to {@code jdbc:postgresql://host:port/db} and the embedded
+ * rewritten to {@code jdbc:postgresql://host:port/db?sslmode=require} and the embedded
  * username/password are extracted into {@code spring.datasource.username} and
  * {@code spring.datasource.password} (unless those are already set).
+ *
+ * <p>For URLs that are already in JDBC format, if the host is not localhost and
+ * {@code sslmode} is missing, {@code sslmode=require} is appended automatically
+ * (required by Supabase and Render).
  *
  * <p>Registered via {@code META-INF/spring.factories} so it runs before any bean
  * is created.
@@ -33,7 +37,7 @@ public class RenderDatabaseUrlProcessor implements EnvironmentPostProcessor {
     public void postProcessEnvironment(ConfigurableEnvironment environment,
                                        SpringApplication application) {
 
-        // Try SPRING_DATASOURCE_URL first, then DATABASE_URL (Render auto-sets this).
+        // Try SPRING_DATASOURCE_URL first, then DATABASE_URL (Render/Supabase auto-sets this).
         String raw = environment.getProperty("spring.datasource.url");
 
         if (isBlankOrEmpty(raw)) {
@@ -46,8 +50,16 @@ public class RenderDatabaseUrlProcessor implements EnvironmentPostProcessor {
 
         raw = raw.trim();
 
-        // Already a valid JDBC URL – nothing to do.
+        // Already a valid JDBC URL – ensure sslmode is present for remote hosts, then return.
         if (raw.startsWith("jdbc:")) {
+            String ensured = ensureSslMode(raw);
+            if (!ensured.equals(raw)) {
+                Map<String, Object> props = new HashMap<>();
+                props.put("spring.datasource.url", ensured);
+                environment.getPropertySources()
+                        .addFirst(new MapPropertySource("renderDatabaseUrl", props));
+                System.out.println("[DatabaseUrlProcessor] Added sslmode=require: " + ensured);
+            }
             return;
         }
 
@@ -73,9 +85,19 @@ public class RenderDatabaseUrlProcessor implements EnvironmentPostProcessor {
                     .append(host).append(':').append(port)
                     .append(path != null ? path : "/postgres");
 
-            if (query != null && !query.isEmpty()) {
+            // Build query string, auto-appending sslmode=require for remote hosts
+            boolean hasQuery = query != null && !query.isEmpty();
+            boolean isRemote = host != null && !"localhost".equals(host) && !"127.0.0.1".equals(host);
+            if (hasQuery) {
                 jdbcUrl.append('?').append(query);
+                if (isRemote && !query.contains("sslmode")) {
+                    jdbcUrl.append("&sslmode=require");
+                }
+            } else if (isRemote) {
+                jdbcUrl.append("?sslmode=require");
             }
+
+            System.out.println("[DatabaseUrlProcessor] Converted DB URL to: " + jdbcUrl);
 
             Map<String, Object> props = new HashMap<>();
             props.put("spring.datasource.url", jdbcUrl.toString());
@@ -107,8 +129,22 @@ public class RenderDatabaseUrlProcessor implements EnvironmentPostProcessor {
 
         } catch (Exception e) {
             // If parsing fails, let the normal Spring error surface.
-            System.err.println("[RenderDatabaseUrlProcessor] Failed to parse database URL: " + e.getMessage());
+            System.err.println("[DatabaseUrlProcessor] Failed to parse database URL: " + e.getMessage());
         }
+    }
+
+    /**
+     * For JDBC URLs targeting remote hosts, ensure sslmode=require is present.
+     */
+    private static String ensureSslMode(String jdbcUrl) {
+        // Quick check: skip localhost
+        if (jdbcUrl.contains("localhost") || jdbcUrl.contains("127.0.0.1")) {
+            return jdbcUrl;
+        }
+        if (jdbcUrl.contains("sslmode")) {
+            return jdbcUrl;
+        }
+        return jdbcUrl.contains("?") ? jdbcUrl + "&sslmode=require" : jdbcUrl + "?sslmode=require";
     }
 
     private static boolean isBlankOrEmpty(String s) {
