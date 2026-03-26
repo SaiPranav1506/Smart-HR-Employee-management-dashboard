@@ -1,12 +1,19 @@
 package com.example.rollbasedlogin.controller;
 
 import java.time.LocalDateTime;
+import java.util.Base64;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -19,6 +26,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.example.rollbasedlogin.dto.ChatMessageRequest;
 import com.example.rollbasedlogin.dto.ChatContactsResponse;
@@ -36,6 +44,22 @@ import com.example.rollbasedlogin.util.JwtUtil;
 @RequestMapping("/api/chat")
 @CrossOrigin(origins = "*")
 public class ChatController {
+
+    private static final long MAX_CHAT_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+
+    private static final Set<String> ALLOWED_TYPES = Set.of(
+        "application/pdf",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/vnd.ms-excel",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "application/vnd.ms-powerpoint",
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        "text/plain", "text/csv",
+        "image/png", "image/jpeg", "image/gif", "image/webp", "image/svg+xml",
+        "application/zip", "application/x-rar-compressed",
+        "application/json", "application/xml", "text/xml"
+    );
 
     @Autowired
     private ChatMessageRepository chatRepo;
@@ -58,16 +82,28 @@ public class ChatController {
     private void publishToLiveInbox(ChatMessage m) {
         if (messagingTemplate == null || m == null) return;
 
-        // Direct inbox (email)
+        // Use a safe map (no fileData) instead of mutating the managed entity
+        Map<String, Object> payload = toSafeMap(m);
+
+        // Notify receiver (by email)
         if (m.getReceiverEmail() != null && !m.getReceiverEmail().isBlank()) {
             String key = m.getReceiverEmail().trim().toLowerCase(Locale.ROOT);
-            messagingTemplate.convertAndSend("/topic/inbox." + key, m);
+            messagingTemplate.convertAndSend("/topic/inbox." + key, payload);
         }
 
-        // Role-based inbox
+        // Notify receiver (by role, for role-based messages)
         if (m.getReceiverRole() != null && !m.getReceiverRole().isBlank()) {
             String key = m.getReceiverRole().trim().toLowerCase(Locale.ROOT);
-            messagingTemplate.convertAndSend("/topic/inbox.role." + key, m);
+            messagingTemplate.convertAndSend("/topic/inbox.role." + key, payload);
+        }
+
+        // Also notify the sender so their inbox updates
+        if (m.getSenderEmail() != null && !m.getSenderEmail().isBlank()) {
+            String senderKey = m.getSenderEmail().trim().toLowerCase(Locale.ROOT);
+            // Avoid double-publish if sender == receiver
+            if (m.getReceiverEmail() == null || !senderKey.equals(m.getReceiverEmail().trim().toLowerCase(Locale.ROOT))) {
+                messagingTemplate.convertAndSend("/topic/inbox." + senderKey, payload);
+            }
         }
     }
 
@@ -85,6 +121,26 @@ public class ChatController {
     private static UserPublicDto toPublic(User u) {
         if (u == null) return null;
         return new UserPublicDto(u.getEmail(), u.getUsername(), u.getRole());
+    }
+
+    /** Convert a ChatMessage to a Map without fileData (safe for JSON responses, no JPA side-effects) */
+    private Map<String, Object> toSafeMap(ChatMessage m) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("id", m.getId());
+        map.put("senderEmail", m.getSenderEmail());
+        map.put("senderRole", m.getSenderRole());
+        map.put("receiverEmail", m.getReceiverEmail());
+        map.put("receiverRole", m.getReceiverRole());
+        map.put("subject", m.getSubject());
+        map.put("content", m.getContent());
+        map.put("messageType", m.getMessageType());
+        map.put("tripId", m.getTripId());
+        map.put("createdAt", m.getCreatedAt());
+        map.put("readFlag", m.isReadFlag());
+        map.put("fileName", m.getFileName());
+        map.put("fileType", m.getFileType());
+        map.put("fileSize", m.getFileSize());
+        return map;
     }
 
     private String authEmail(String authHeader, String fallbackEmail) {
@@ -168,7 +224,9 @@ public class ChatController {
         List<ChatMessage> list = chatRepo.inbox(e, r);
         // keep payload small
         if (list.size() > 50) list = list.subList(0, 50);
-        return ResponseEntity.ok(list);
+        // Convert to maps to avoid JPA dirty-checking (don't mutate managed entities)
+        List<Map<String, Object>> result = list.stream().map(this::toSafeMap).collect(java.util.stream.Collectors.toList());
+        return ResponseEntity.ok(result);
     }
 
     @GetMapping("/conversation")
@@ -186,7 +244,9 @@ public class ChatController {
         if (list.size() > 200) {
             list = list.subList(list.size() - 200, list.size());
         }
-        return ResponseEntity.ok(list);
+        // Convert to maps to avoid JPA dirty-checking (don't mutate managed entities)
+        List<Map<String, Object>> result = list.stream().map(this::toSafeMap).collect(java.util.stream.Collectors.toList());
+        return ResponseEntity.ok(result);
     }
 
     @PutMapping("/messages/{id}/read")
@@ -447,6 +507,118 @@ public class ChatController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error marking message as read: " + e.getMessage());
         }
+    }
+
+    // ===================== FILE ATTACHMENT IN CHAT =====================
+
+    private String sanitizeName(String name) {
+        if (name == null) return "file";
+        return name.replaceAll("[^a-zA-Z0-9._\\-]", "_");
+    }
+
+    @PostMapping("/messages/with-file")
+    public ResponseEntity<?> sendMessageWithFile(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestParam(value = "receiverEmail", required = false) String receiverEmail,
+            @RequestParam(value = "receiverRole", required = false) String receiverRole,
+            @RequestParam(value = "subject", required = false) String subject,
+            @RequestParam(value = "content", required = false) String content,
+            @RequestParam(value = "messageType", required = false) String messageType,
+            @RequestParam("file") MultipartFile file) {
+
+        String senderEmail = authEmail(authHeader, null);
+        String senderRole = authRole(authHeader, null);
+        if (senderEmail == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+        }
+
+        String recvEmail = norm(receiverEmail);
+        String recvRole = norm(receiverRole);
+        if (recvEmail == null && recvRole == null) {
+            return ResponseEntity.badRequest().body("receiverEmail or receiverRole is required");
+        }
+
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().body("File is empty");
+        }
+        if (file.getSize() > MAX_CHAT_FILE_SIZE) {
+            return ResponseEntity.badRequest().body("File too large. Maximum 10 MB");
+        }
+        String ct = file.getContentType();
+        if (ct == null || !ALLOWED_TYPES.contains(ct)) {
+            return ResponseEntity.badRequest().body("File type not allowed: " + ct);
+        }
+
+        try {
+            ChatMessage m = new ChatMessage();
+            m.setSenderEmail(senderEmail);
+            m.setSenderRole(senderRole);
+            m.setReceiverEmail(recvEmail);
+            m.setReceiverRole(recvRole);
+            m.setSubject(norm(subject));
+            m.setContent(norm(content) != null ? norm(content) : "[File: " + sanitizeName(file.getOriginalFilename()) + "]");
+            m.setMessageType(norm(messageType));
+            m.setCreatedAt(LocalDateTime.now().toString());
+            m.setReadFlag(false);
+
+            m.setFileName(sanitizeName(file.getOriginalFilename()));
+            m.setFileType(ct);
+            m.setFileSize(file.getSize());
+            m.setFileData(Base64.getEncoder().encodeToString(file.getBytes()));
+
+            chatRepo.save(m);
+            publishToLiveInbox(m);
+
+            // Return without fileData to keep response light
+            Map<String, Object> resp = new HashMap<>();
+            resp.put("id", m.getId());
+            resp.put("senderEmail", m.getSenderEmail());
+            resp.put("receiverEmail", m.getReceiverEmail());
+            resp.put("content", m.getContent());
+            resp.put("fileName", m.getFileName());
+            resp.put("fileType", m.getFileType());
+            resp.put("fileSize", m.getFileSize());
+            resp.put("createdAt", m.getCreatedAt());
+            return ResponseEntity.status(HttpStatus.CREATED).body(resp);
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed to send file: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/messages/{id}/download")
+    public ResponseEntity<?> downloadChatFile(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable Long id) {
+
+        String me = authEmail(authHeader, null);
+        if (me == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+        }
+
+        Optional<ChatMessage> opt = chatRepo.findById(id);
+        if (opt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Message not found");
+        }
+
+        ChatMessage m = opt.get();
+        // Only sender or receiver can download
+        boolean isSender = me.equalsIgnoreCase(m.getSenderEmail());
+        boolean isReceiver = me.equalsIgnoreCase(m.getReceiverEmail() != null ? m.getReceiverEmail() : "");
+        if (!isSender && !isReceiver) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access denied");
+        }
+
+        if (m.getFileData() == null || m.getFileName() == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No file attached to this message");
+        }
+
+        byte[] bytes = Base64.getDecoder().decode(m.getFileData());
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(m.getFileType() != null ? m.getFileType() : "application/octet-stream"))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + m.getFileName() + "\"")
+                .body(bytes);
     }
 }
 

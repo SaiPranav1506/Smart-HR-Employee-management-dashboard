@@ -119,14 +119,36 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request) {
-        Optional<User> userOpt = userRepo.findByEmail(request.getEmail());
+        // Support login by email, username, or phone number
+        String identifier = request.getIdentifier();
+        if (identifier == null || identifier.isBlank()) {
+            identifier = request.getEmail(); // backward compat
+        }
+        if (identifier == null || identifier.isBlank()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Email, username, or phone number is required");
+        }
+        identifier = identifier.trim();
+
+        Optional<User> userOpt;
+        if (identifier.contains("@")) {
+            userOpt = userRepo.findByEmail(identifier);
+        } else if (identifier.startsWith("+") || identifier.matches("^\\d{10,15}$")) {
+            userOpt = userRepo.findByPhoneNumber(identifier);
+            if (userOpt.isEmpty()) {
+                // Try with common prefix for Indian numbers
+                userOpt = userRepo.findByPhoneNumber("+91" + identifier);
+            }
+        } else {
+            userOpt = userRepo.findByUsername(identifier);
+        }
+
         if (userOpt.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid email");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
         }
 
         User user = userOpt.get();
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid password");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
         }
 
         if (!twoFactorEnabled) {
@@ -135,16 +157,24 @@ public class AuthController {
         }
 
         try {
-            TwoFactorService.StartResult start = twoFactorService.start(user.getEmail(), user.getRole());
+            TwoFactorService.StartResult start = twoFactorService.start(
+                    user.getEmail(), user.getRole(), user.getUsername(), user.getPhoneNumber());
             TwoFactorStartResponse response = new TwoFactorStartResponse();
             response.setTwoFactorRequired(true);
             response.setVerificationId(start.getVerificationId());
             response.setExpiresAtEpochMs(start.getExpiresAtEpochMs());
-            response.setMessage("Verification code sent to your email.");
+            String maskedPhone = maskPhone(user.getPhoneNumber());
+            response.setMessage("OTP sent to " + maskedPhone);
             return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
         } catch (RuntimeException ex) {
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(ex.getMessage());
         }
+    }
+
+    private String maskPhone(String phone) {
+        if (phone == null || phone.length() < 4) return "****";
+        return phone.substring(0, phone.length() - 4).replaceAll("\\d", "*")
+                + phone.substring(phone.length() - 4);
     }
 
     @PostMapping("/verify-2fa")
@@ -159,7 +189,7 @@ public class AuthController {
                     request.getCode()
             );
 
-            String token = jwtUtil.generateToken(principal.getEmail(), principal.getRole());
+            String token = jwtUtil.generateToken(principal.getEmail(), principal.getRole(), principal.getUsername());
             return ResponseEntity.ok(new LoginResponse(token, principal.getRole()));
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());

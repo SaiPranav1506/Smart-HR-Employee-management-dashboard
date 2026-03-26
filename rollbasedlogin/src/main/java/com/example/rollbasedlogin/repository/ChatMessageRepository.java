@@ -12,6 +12,7 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
 
     @Query("select m from ChatMessage m " +
             "where (lower(m.receiverEmail) = lower(:email)) " +
+            "   or (lower(m.senderEmail) = lower(:email)) " +
             "   or (m.receiverEmail is null and m.receiverRole is not null and lower(m.receiverRole) = lower(:role)) " +
             "order by m.id desc")
     List<ChatMessage> inbox(@Param("email") String email, @Param("role") String role);

@@ -2,6 +2,7 @@ package com.example.rollbasedlogin.dto;
 
 public class LoginRequest {
     private String email;
+    private String identifier; // email, username, or phone
     private String password;
 
     public String getEmail() {
@@ -10,6 +11,14 @@ public class LoginRequest {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public String getIdentifier() {
+        return identifier;
+    }
+
+    public void setIdentifier(String identifier) {
+        this.identifier = identifier;
     }
 
     public String getPassword() {

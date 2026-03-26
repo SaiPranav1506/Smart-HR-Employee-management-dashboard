@@ -9,6 +9,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -62,6 +64,77 @@ public class PersonalInfoController {
         }
 
         User user = userOpt.get();
+        return ResponseEntity.ok(buildPersonalInfoResponse(user));
+    }
+
+    /**
+     * PUT /api/profile/me
+     * Update current user's personal information (editable fields only)
+     */
+    @PutMapping("/me")
+    public ResponseEntity<?> updateMyProfile(
+            @RequestHeader("Authorization") String authHeader,
+            @RequestBody Map<String, String> updates) {
+
+        String email = getEmailFromAuthHeader(authHeader);
+        if (email == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+        }
+
+        Optional<User> userOpt = userRepo.findByEmail(email);
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+
+        User user = userOpt.get();
+
+        // Update username
+        if (updates.containsKey("username") && updates.get("username") != null
+                && !updates.get("username").isBlank()) {
+            user.setUsername(updates.get("username").trim());
+        }
+
+        // Update phone number (with validation)
+        if (updates.containsKey("phoneNumber") && updates.get("phoneNumber") != null
+                && !updates.get("phoneNumber").isBlank()) {
+            String country = updates.containsKey("country") && updates.get("country") != null
+                    ? updates.get("country").trim()
+                    : user.getCountry();
+            String formatted = CountryCodeUtil.formatPhoneNumber(country, updates.get("phoneNumber"));
+            if (!CountryCodeUtil.isValidPhoneNumber(country, formatted)) {
+                return ResponseEntity.badRequest()
+                        .body("Invalid phone number for " + country + ". Expected: " + CountryCodeUtil.getPhonePlaceholder(country));
+            }
+            user.setPhoneNumber(formatted);
+        }
+
+        // Update country
+        if (updates.containsKey("country") && updates.get("country") != null
+                && !updates.get("country").isBlank()) {
+            user.setCountry(updates.get("country").trim());
+        }
+
+        userRepo.save(user);
+
+        // If driver, also update driver table
+        if ("driver".equalsIgnoreCase(user.getRole())) {
+            Optional<Driver> driverOpt = driverRepo.findByEmail(email);
+            if (driverOpt.isPresent()) {
+                Driver driver = driverOpt.get();
+                if (updates.containsKey("username")) {
+                    driver.setName(user.getUsername());
+                }
+                if (updates.containsKey("cabType") && updates.get("cabType") != null
+                        && !updates.get("cabType").isBlank()) {
+                    driver.setCabType(updates.get("cabType").trim());
+                }
+                if (updates.containsKey("phoneNumber")) {
+                    driver.setPhoneNumber(user.getPhoneNumber());
+                }
+                driverRepo.save(driver);
+            }
+        }
+
         return ResponseEntity.ok(buildPersonalInfoResponse(user));
     }
 

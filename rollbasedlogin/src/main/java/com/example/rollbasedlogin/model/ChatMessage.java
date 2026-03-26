@@ -5,6 +5,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Lob;
 
 @Entity
 public class ChatMessage {
@@ -36,6 +37,15 @@ public class ChatMessage {
 
     @Column(nullable = false)
     private boolean readFlag;
+
+    // File attachment fields
+    private String fileName;
+    private String fileType;
+    private Long fileSize;
+
+    @Lob
+    @Column(columnDefinition = "TEXT")
+    private String fileData; // Base64 encoded
 
     public Long getId() {
         return id;
@@ -119,5 +129,37 @@ public class ChatMessage {
 
     public void setTripId(Long tripId) {
         this.tripId = tripId;
+    }
+
+    public String getFileName() {
+        return fileName;
+    }
+
+    public void setFileName(String fileName) {
+        this.fileName = fileName;
+    }
+
+    public String getFileType() {
+        return fileType;
+    }
+
+    public void setFileType(String fileType) {
+        this.fileType = fileType;
+    }
+
+    public Long getFileSize() {
+        return fileSize;
+    }
+
+    public void setFileSize(Long fileSize) {
+        this.fileSize = fileSize;
+    }
+
+    public String getFileData() {
+        return fileData;
+    }
+
+    public void setFileData(String fileData) {
+        this.fileData = fileData;
     }
 }

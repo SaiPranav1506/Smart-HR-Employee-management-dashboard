@@ -8,9 +8,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 public class TwoFactorService {
+
+    private static final Logger log = LoggerFactory.getLogger(TwoFactorService.class);
 
     public static class StartResult {
         private final String verificationId;
@@ -33,10 +37,12 @@ public class TwoFactorService {
     public static class VerifiedPrincipal {
         private final String email;
         private final String role;
+        private final String username;
 
-        public VerifiedPrincipal(String email, String role) {
+        public VerifiedPrincipal(String email, String role, String username) {
             this.email = email;
             this.role = role;
+            this.username = username;
         }
 
         public String getEmail() {
@@ -46,18 +52,24 @@ public class TwoFactorService {
         public String getRole() {
             return role;
         }
+
+        public String getUsername() {
+            return username;
+        }
     }
 
     private static class Challenge {
         private final String email;
         private final String role;
+        private final String username;
         private final String codeHash;
         private final Instant expiresAt;
         private int attemptsLeft;
 
-        private Challenge(String email, String role, String codeHash, Instant expiresAt, int attemptsLeft) {
+        private Challenge(String email, String role, String username, String codeHash, Instant expiresAt, int attemptsLeft) {
             this.email = email;
             this.role = role;
+            this.username = username;
             this.codeHash = codeHash;
             this.expiresAt = expiresAt;
             this.attemptsLeft = attemptsLeft;
@@ -65,6 +77,7 @@ public class TwoFactorService {
     }
 
     private final EmailService emailService;
+    private final TwilioService twilioService;
     private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
     private final SecureRandom random = new SecureRandom();
     private final ConcurrentHashMap<String, Challenge> challenges = new ConcurrentHashMap<>();
@@ -75,19 +88,41 @@ public class TwoFactorService {
     @Value("${app.2fa.max-attempts:5}")
     private int maxAttempts;
 
-    public TwoFactorService(EmailService emailService) {
+    public TwoFactorService(EmailService emailService, TwilioService twilioService) {
         this.emailService = emailService;
+        this.twilioService = twilioService;
     }
 
+    /** Backward-compat overload (email-only 2FA). */
     public StartResult start(String email, String role) {
+        return start(email, role, null, null);
+    }
+
+    /**
+     * Start 2FA: sends OTP to phone via SMS. Falls back to email if phone is unavailable.
+     */
+    public StartResult start(String email, String role, String username, String phoneNumber) {
         String verificationId = UUID.randomUUID().toString();
         String code = generateSixDigitCode();
         Instant expiresAt = Instant.now().plusSeconds(ttlSeconds);
 
-        // Send first; only store if the email send succeeded
-        emailService.sendTwoFactorCode(email, code);
+        // Prefer SMS to phone if Twilio is available, otherwise fall back to email
+        if (phoneNumber != null && !phoneNumber.isBlank() && twilioService.isAvailable()) {
+            try {
+                twilioService.sendLoginOtp(phoneNumber, code);
+                log.info("[2FA] OTP sent via SMS to {}", phoneNumber);
+            } catch (Exception smsEx) {
+                log.warn("[2FA] SMS delivery failed, falling back to email: {}", smsEx.getMessage());
+                emailService.sendTwoFactorCode(email, code);
+            }
+        } else {
+            if (phoneNumber != null && !phoneNumber.isBlank()) {
+                log.warn("[2FA] Twilio not available — cannot send SMS to {}. Falling back to email.", phoneNumber);
+            }
+            emailService.sendTwoFactorCode(email, code);
+        }
 
-        Challenge challenge = new Challenge(email, role, encoder.encode(code), expiresAt, maxAttempts);
+        Challenge challenge = new Challenge(email, role, username, encoder.encode(code), expiresAt, maxAttempts);
         challenges.put(verificationId, challenge);
 
         return new StartResult(verificationId, expiresAt.toEpochMilli());
@@ -123,7 +158,7 @@ public class TwoFactorService {
         }
 
         challenges.remove(verificationId);
-        return new VerifiedPrincipal(challenge.email, challenge.role);
+        return new VerifiedPrincipal(challenge.email, challenge.role, challenge.username);
     }
 
     private String generateSixDigitCode() {

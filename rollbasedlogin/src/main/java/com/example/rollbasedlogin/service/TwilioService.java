@@ -16,6 +16,13 @@ public class TwilioService {
     @Autowired
     private TwilioConfig twilioConfig;
 
+    /**
+     * Check if Twilio SMS is available (enabled and properly configured).
+     */
+    public boolean isAvailable() {
+        return twilioConfig.isEnabled() && twilioConfig.isProperlyConfigured();
+    }
+
     public void sendOtpSms(String phoneNumber, String otpCode) {
         log.info("[OTP-SMS] Sending OTP to phone: {}", phoneNumber);
         
@@ -40,21 +47,40 @@ public class TwilioService {
             return;
         }
 
-        try {
-            String messageBody = "Your ride OTP is: " + otpCode + ". Valid for 10 minutes. Do not share this code.";
+        sendSms(phoneNumber, "Your ride OTP is: " + otpCode + ". Valid for 10 minutes. Do not share this code.");
+    }
 
+    /**
+     * Send a login 2FA OTP via SMS.
+     */
+    public void sendLoginOtp(String phoneNumber, String otpCode) {
+        log.info("[OTP-SMS] Sending Login OTP to phone: {}", phoneNumber);
+
+        if (phoneNumber == null || phoneNumber.trim().isBlank()) {
+            throw new IllegalArgumentException("Phone number cannot be empty");
+        }
+        if (!twilioConfig.isEnabled() || !twilioConfig.isProperlyConfigured()) {
+            log.warn("[OTP-SMS] Twilio not available. Login OTP will NOT be sent via SMS.");
+            throw new RuntimeException("Twilio SMS is not available");
+        }
+
+        sendSms(phoneNumber, "Your Login OTP is " + otpCode);
+    }
+
+    private void sendSms(String phoneNumber, String messageBody) {
+        try {
             log.debug("[OTP-SMS] Creating Twilio message to: {} | From: {}", phoneNumber, twilioConfig.getPhoneNumber());
-            
+
             Message message = Message.creator(
-                    new PhoneNumber(phoneNumber),                      // To number
-                    new PhoneNumber(twilioConfig.getPhoneNumber()),    // From number
-                    messageBody                                         // Message body
+                    new PhoneNumber(phoneNumber),
+                    new PhoneNumber(twilioConfig.getPhoneNumber()),
+                    messageBody
                 )
                 .create();
 
-            log.info("[OTP-SMS] ✅ Successfully sent OTP to {} | Message SID: {}", phoneNumber, message.getSid());
+            log.info("[OTP-SMS] ✅ Successfully sent to {} | Message SID: {}", phoneNumber, message.getSid());
         } catch (Exception e) {
-            log.error("[OTP-SMS] ❌ Failed to send OTP to {} | Error: {}", phoneNumber, e.getMessage(), e);
+            log.error("[OTP-SMS] ❌ Failed to send to {} | Error: {}", phoneNumber, e.getMessage(), e);
             throw new RuntimeException("Failed to send OTP via SMS: " + e.getMessage());
         }
     }
