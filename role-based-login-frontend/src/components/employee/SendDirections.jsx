@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { authStorage } from "../../auth/storage";
 import { API_BASE_URL } from "../../api/client";
+import DriverLocationMap from "../common/DriverLocationMap";
 
 const SendDirections = ({ tripId, driverEmail, driverName, employeeEmail, pickup, dropLocation }) => {
   const token = authStorage.getToken();
@@ -142,6 +143,11 @@ const SendDirections = ({ tripId, driverEmail, driverName, employeeEmail, pickup
 
       {expandedMessages && (
         <div>
+          {/* Driver Location Map */}
+          <div style={{ marginBottom: "12px" }}>
+            <DriverLocationMap driverEmail={driverEmail} pickupLocation={pickup} dropLocation={dropLocation} />
+          </div>
+
           {/* Messages List */}
           <div
             style={{

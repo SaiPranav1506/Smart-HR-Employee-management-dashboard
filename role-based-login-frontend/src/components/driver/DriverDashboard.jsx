@@ -5,6 +5,7 @@ import { authStorage } from "../../auth/storage";
 import LiveMouseBackground from "../common/LiveMouseBackground";
 
 import TripCommunication from "./TripCommunication";
+import ShareLocationButton from "../common/ShareLocationButton";
 
 import { API_BASE_URL } from "../../api/client";
 
@@ -242,6 +243,11 @@ const DriverDashboard = () => {
               </div>
             </div>
           </section>
+
+          {/* Share Location Button */}
+          <div style={{ marginBottom: "24px" }}>
+            <ShareLocationButton />
+          </div>
 
           <section id="dash-options" className="dashOptions" aria-label="Driver dashboard options">
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, flexWrap: "wrap" }}>

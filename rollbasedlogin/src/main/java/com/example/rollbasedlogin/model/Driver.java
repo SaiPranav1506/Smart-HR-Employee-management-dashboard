@@ -18,6 +18,11 @@ public class Driver {
     private String cabType; // "Cab" or "Van"
     private boolean available = true;
     private String phoneNumber; // Phone number for OTP delivery
+    
+    // Location tracking for live map
+    private Double latitude;  // Current latitude
+    private Double longitude; // Current longitude
+    private Long lastLocationUpdate; // Timestamp of last location update
 
     // --- Getters & Setters ---
 
@@ -67,5 +72,29 @@ public class Driver {
 
     public void setPhoneNumber(String phoneNumber) {
         this.phoneNumber = phoneNumber;
+    }
+
+    public Double getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(Double latitude) {
+        this.latitude = latitude;
+    }
+
+    public Double getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(Double longitude) {
+        this.longitude = longitude;
+    }
+
+    public Long getLastLocationUpdate() {
+        return lastLocationUpdate;
+    }
+
+    public void setLastLocationUpdate(Long lastLocationUpdate) {
+        this.lastLocationUpdate = lastLocationUpdate;
     }
 }

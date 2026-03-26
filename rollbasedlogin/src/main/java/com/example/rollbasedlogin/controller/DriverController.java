@@ -26,6 +26,7 @@ import com.example.rollbasedlogin.model.User;
 import com.example.rollbasedlogin.repository.BookingRepository;
 import com.example.rollbasedlogin.repository.ChatMessageRepository;
 import com.example.rollbasedlogin.repository.DriverRepository;
+import com.example.rollbasedlogin.repository.DriverLocationHistoryRepository;
 import com.example.rollbasedlogin.repository.NotificationRepository;
 import com.example.rollbasedlogin.repository.UserRepository;
 import com.example.rollbasedlogin.service.OtpService;
@@ -48,6 +49,9 @@ public class DriverController {
 
     @Autowired
     private NotificationRepository notificationRepo;
+
+    @Autowired
+    private DriverLocationHistoryRepository locationHistoryRepo;
 
     @Autowired
     private UserRepository userRepo;
@@ -600,5 +604,89 @@ public class DriverController {
         }
         
         return ResponseEntity.ok(debug);
+    }
+
+    /**
+     * UPDATE DRIVER LOCATION - Called by driver's mobile/web app
+     * POST /api/driver/location/update
+     * Body: { "latitude": 40.7128, "longitude": -74.0060, "address": "123 Main St" }
+     */
+    @PostMapping("/location/update")
+    public ResponseEntity<?> updateDriverLocation(
+            @RequestHeader("Authorization") String authHeader,
+            @RequestBody java.util.Map<String, Object> locationData) {
+        try {
+            String token = authHeader.replace("Bearer ", "");
+            String driverEmail = jwtUtil.getEmailFromToken(token);
+            
+            Double latitude = ((Number) locationData.get("latitude")).doubleValue();
+            Double longitude = ((Number) locationData.get("longitude")).doubleValue();
+            String address = (String) locationData.getOrDefault("address", "");
+            
+            // Update driver's current location
+            Optional<Driver> driverOpt = driverRepo.findByEmail(driverEmail);
+            if (!driverOpt.isPresent()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                    java.util.Map.of("error", "Driver not found"));
+            }
+            
+            Driver driver = driverOpt.get();
+            driver.setLatitude(latitude);
+            driver.setLongitude(longitude);
+            driver.setLastLocationUpdate(System.currentTimeMillis());
+            driverRepo.save(driver);
+            
+            // Save location history
+            com.example.rollbasedlogin.model.DriverLocationHistory history = 
+                new com.example.rollbasedlogin.model.DriverLocationHistory();
+            history.setDriverEmail(driverEmail);
+            history.setLatitude(latitude);
+            history.setLongitude(longitude);
+            history.setAddress(address);
+            history.setTimestamp(java.time.LocalDateTime.now());
+            locationHistoryRepo.save(history);
+            
+            return ResponseEntity.ok(java.util.Map.of(
+                "success", true,
+                "message", "Location updated",
+                "latitude", latitude,
+                "longitude", longitude
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                java.util.Map.of("error", "Failed to update location: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * GET DRIVER LOCATION - Called by employee to see driver's current location
+     * GET /api/driver/location/{driverEmail}
+     */
+    @GetMapping("/location/{driverEmail}")
+    public ResponseEntity<?> getDriverLocation(@PathVariable String driverEmail) {
+        try {
+            Optional<Driver> driverOpt = driverRepo.findByEmail(driverEmail);
+            if (!driverOpt.isPresent()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                    java.util.Map.of("error", "Driver not found"));
+            }
+            
+            Driver driver = driverOpt.get();
+            if (driver.getLatitude() == null || driver.getLongitude() == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                    java.util.Map.of("error", "Driver location not available yet"));
+            }
+            
+            return ResponseEntity.ok(java.util.Map.of(
+                "driverName", driver.getName(),
+                "latitude", driver.getLatitude(),
+                "longitude", driver.getLongitude(),
+                "lastUpdate", driver.getLastLocationUpdate(),
+                "available", driver.isAvailable()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                java.util.Map.of("error", "Failed to fetch location: " + e.getMessage()));
+        }
     }
 }
