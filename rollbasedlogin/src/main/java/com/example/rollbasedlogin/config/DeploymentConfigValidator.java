@@ -47,12 +47,18 @@ public class DeploymentConfigValidator {
 
     private void validateResendConfig() {
         // Only validate Resend when we actually plan to send emails.
-        // This avoids blocking local/dev boots when APP_2FA_DELIVERY=log.
+        // This avoids blocking local/dev boots when APP_2FA_DELIVERY=log or APP_2FA_DELIVERY=sms.
         if (!twoFactorEnabled) {
             return;
         }
 
         String delivery = (twoFactorDelivery == null ? "mail" : twoFactorDelivery.trim().toLowerCase());
+        
+        // Skip validation if using SMS or log delivery (email not needed)
+        if ("sms".equals(delivery) || "log".equals(delivery)) {
+            return;
+        }
+        
         if (!"mail".equals(delivery)) {
             return;
         }
@@ -78,7 +84,7 @@ public class DeploymentConfigValidator {
                         "APP_MAIL_FROM='" + mailFrom.trim() + "' uses a public email domain ('" + domain + "'). " +
                                 "Resend requires you to verify a domain you own, so Gmail/Yahoo/Outlook addresses cannot be used as the Resend 'from' address. " +
                                 "Fix: add a domain in Resend (Domains → Add domain), verify DNS, then set APP_MAIL_FROM like noreply@yourdomain.com. " +
-                                "Temporary workaround: set APP_2FA_DELIVERY=log to boot without sending emails."
+                                "Temporary workaround: set APP_2FA_DELIVERY=sms to use Twilio SMS instead."
                 );
             }
         }
